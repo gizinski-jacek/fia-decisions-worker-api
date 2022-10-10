@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "ES6",
+		"module": "CommonJS",
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"allowJs": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"rootDir": "./",
+		"outDir": "./",
+		"sourceMap": true,
+		"baseUrl": "./"
+	},
+	"include": ["**/*.ts", "./**/*.ts"],
+	"exclude": ["node_modules"]
+}
