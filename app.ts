@@ -11,16 +11,18 @@ var cors = require('cors');
 var helmet = require('helmet');
 var compression = require('compression');
 
-// Simply pass the port that you want a Redis server to listen on.
-const redisServer = new RedisServer(6379);
+if (process.env.NODE_ENV !== 'production') {
+	// Simply pass the port that you want a Redis server to listen on.
+	const redisServer = new RedisServer(6379);
 
-redisServer.open((err: any) => {
-	if (err === null) {
-		// You may now connect a client to the Redis server bound to port 6379.
-	}
-});
-const client = redis.createClient();
-client.connect();
+	redisServer.open((err: any) => {
+		if (err === null) {
+			// You may now connect a client to the Redis server bound to port 6379.
+		}
+	});
+	const client = redis.createClient();
+	client.connect();
+}
 
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
