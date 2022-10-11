@@ -22,21 +22,66 @@ router.get('/', (req: any, res: any, next: any) => {
 });
 
 router.get(
+	'/update-newest/decisions-offences/:series/:year',
+	async function (req: any, res: any, next: any) {
+		console.log(req.headers.referer);
+		// This would be where you could pass arguments to the job
+		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
+		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
+		try {
+			if (!process.env.CRON_JOB_UPDATE_NEWEST_SECRET) {
+				throw new Error(
+					'Please define CRON_JOB_UPDATE_NEWEST_SECRET environment variable inside .env.local'
+				);
+			}
+			const { authorization } = req.headers;
+			if (
+				authorization === `Bearer ${process.env.CRON_JOB_UPDATE_NEWEST_SECRET}`
+			) {
+				const series = supportedSeries.find(
+					(s) => s === req.params.series.toLowerCase()
+				);
+				const year = req.params.year || new Date().getFullYear().toString();
+				if (!series) {
+					return res.status(422).json('Unsupported series.');
+				}
+				const seriesYearDB = dbNameList[`${series}_${year}_db`];
+				const seriesYearPageURL = fiaPageList[`${series}_${year}_page`];
+				if (!seriesYearDB || !seriesYearPageURL) {
+					return res.status(422).json('Unsupported year.');
+				}
+				const job = await workQueue.add('update-newest', {
+					series,
+					year,
+					seriesYearDB,
+					seriesYearPageURL,
+				});
+				return res.status(202).json({ id: job.id });
+			} else {
+				return res.status(401).end();
+			}
+		} catch (error: any) {
+			console.log(error);
+			return res.status(500).end();
+		}
+	}
+);
+
+router.get(
 	'/update-all/decisions-offences/:series/:year',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
 		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
 		try {
-			if (!process.env.CRON_JOB_UPDATE_ALL_DOCS_SECRET) {
+			if (!process.env.CRON_JOB_UPDATE_ALL_SECRET) {
 				throw new Error(
-					'Please define CRON_JOB_UPDATE_ALL_DOCS_SECRET environment variable inside .env.local'
+					'Please define CRON_JOB_UPDATE_ALL_SECRET environment variable inside .env.local'
 				);
 			}
 			const { authorization } = req.headers;
 			if (
-				authorization ===
-				`Bearer ${process.env.CRON_JOB_UPDATE_ALL_DOCS_SECRET}`
+				authorization === `Bearer ${process.env.CRON_JOB_UPDATE_ALL_SECRET}`
 			) {
 				const series = supportedSeries.find(
 					(s) => s === req.params.series.toLowerCase()
