@@ -2,7 +2,7 @@ export interface TransformedPDFData {
 	series: string;
 	doc_type: string;
 	doc_name: string;
-	doc_date: Date;
+	doc_date: string;
 	penalty_type: string;
 	grand_prix: string;
 	weekend: string;

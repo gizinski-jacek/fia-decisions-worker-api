@@ -8,7 +8,7 @@ const DecisionOffenceSchema = new Schema<DecisionOffenceModel>(
 		series: { type: String, trim: true, required: true },
 		doc_type: { type: String, trim: true, required: true },
 		doc_name: { type: String, trim: true, required: true },
-		doc_date: { type: Date, trim: true, required: true },
+		doc_date: { type: String, trim: true, required: true },
 		grand_prix: { type: String, trim: true, required: true },
 		penalty_type: { type: String, trim: true, required: true },
 		weekend: { type: String, trim: true, required: true },
