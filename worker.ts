@@ -35,33 +35,19 @@ function start() {
 				.exec();
 			// If no documents found in db, create a new update-all job.
 			if (docList.length === 0) {
-				try {
-					const appURI =
-						process.env.NODE_ENV === 'production'
-							? process.env.API_WORKER_URI
-							: process.env.API_WORKER_URI_DEV;
-					if (!appURI) {
-						throw new Error(
-							'Please define API_WORKER_URI / API_WORKER_URI_DEV environment variables inside .env.local'
-						);
-					}
-					const delegate = await workQueue.add('update-all', {
-						series: job.data.series,
-						year: job.data.year,
-						seriesYearDB: job.data.seriesYearDB,
-						seriesYearPageURL: job.data.seriesYearPageURL,
-					});
-					return {
-						status: `No documents found in db, delegating to update-all worker.`,
-						initial_job_id: job.id,
-						delegated_to_job_id: delegate.id,
-						series: delegate.data.series,
-						year: delegate.data.year,
-					};
-				} catch (error: any) {
-					console.log(error);
-					return { error };
-				}
+				const delegate = await workQueue.add('update-all', {
+					series: job.data.series,
+					year: job.data.year,
+					seriesYearDB: job.data.seriesYearDB,
+					seriesYearPageURL: job.data.seriesYearPageURL,
+				});
+				return {
+					status: `No documents found in db, delegating to update-all worker.`,
+					initial_job_id: job.id,
+					delegated_to_job_id: delegate.id,
+					series: delegate.data.series,
+					year: delegate.data.year,
+				};
 			}
 			const responseSite = await axios.get(job.data.seriesYearPageURL, {
 				timeout: 15000,
