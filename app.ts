@@ -34,7 +34,7 @@ const app = express();
 // Create / Connect to a named work queue
 const workQueue = new Queue('worker', REDIS_URL);
 
-const originList = ['https://tracklimits.cfd', 'http://localhost:3000'];
+const originList = ['*', 'http://localhost:3000'];
 const corsOptions = { origin: originList, credentials: true };
 
 app.use(cors(corsOptions));
