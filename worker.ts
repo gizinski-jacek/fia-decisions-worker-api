@@ -110,9 +110,10 @@ function start() {
 			);
 			return {
 				status: 'Finished updating all documents.',
-				series: job.data.series.toUpperCase(),
+				series: job.data.series,
 				year: job.data.year,
-				new_documents_count: allDocsHref.length,
+				documents_found: allDocsHref.length,
+				documents_processed: results.length,
 				successes: results.filter((obj) => obj.status === 'fulfilled').length,
 				failures: results.filter((obj) => obj.status === 'rejected').length,
 			};
