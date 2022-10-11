@@ -343,13 +343,21 @@ export const transformToDecOffDoc = (
 		}
 	}
 
-	// Calculating document UTC timestamp by joining Date and Time,
-	// creating Date object from it, calculating timezone offset,
-	// and substracting it from Date.
+	// Joining Date and Time, creating Date object, extracting
+	// year, month, day, hour and minute, joining them into string
+	// which will be a valid Date format if used to create new Date object.
 	const dateString = documentInfo.Date + ' ' + documentInfo.Time;
-	const timeOffset = new Date().getTimezoneOffset() * 60000;
-	const dateUTC = new Date(dateString).getTime() - timeOffset;
-	const docDate = new Date(dateUTC);
+	const date = new Date(dateString);
+	const day = date.toLocaleString([], { day: '2-digit' });
+	const month = date.toLocaleString([], { month: '2-digit' });
+	const year = date.toLocaleString([], { year: 'numeric' });
+	// Forcing 24 hour format.
+	const hour = date.toLocaleString('en-GB', {
+		hour: '2-digit',
+		hour12: 'false',
+	});
+	const minute = date.toLocaleString([], { minute: '2-digit' });
+	const docDate = year + '/' + month + '/' + day + ' ' + hour + ':' + minute;
 
 	// Returning transformed strings as single formatted data object.
 	const data: TransformedPDFData = {
