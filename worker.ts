@@ -82,7 +82,7 @@ function start() {
 										job.data.series as 'f1' | 'f2' | 'f3'
 									);
 									const docExists = await conn.models.Decision_Offence.findOne({
-										series: job.data.series,
+										series: transformed.series,
 										doc_type: transformed.doc_type,
 										doc_name: transformed.doc_name,
 										doc_date: transformed.doc_date,
