@@ -25,6 +25,168 @@ function start() {
 	// Connect to the named work queue.
 	let workQueue = new Queue('worker', REDIS_URL);
 	// Processing named jobs.
+	// Updating with newest documents for the specified year.
+	workQueue.process('update-newest', maxJobsPerWorker, async (job) => {
+		try {
+			const conn = await connectMongo(job.data.seriesYearDB);
+			const docList = await conn.models.Decision_Offence.find()
+				.sort({ doc_date: -1 })
+				.limit(1)
+				.exec();
+			// If no documents found in db, create a new update-all job.
+			if (docList.length === 0) {
+				try {
+					const appURI =
+						process.env.NODE_ENV === 'production'
+							? process.env.API_WORKER_URI
+							: process.env.API_WORKER_URI_DEV;
+					if (!appURI) {
+						throw new Error(
+							'Please define API_WORKER_URI / API_WORKER_URI_DEV environment variables inside .env.local'
+						);
+					}
+					const delegate = await workQueue.add('update-all', {
+						series: job.data.series,
+						year: job.data.year,
+						seriesYearDB: job.data.seriesYearDB,
+						seriesYearPageURL: job.data.seriesYearPageURL,
+					});
+					return {
+						status: `No documents found in db, delegating to update-all worker.`,
+						initial_job_id: job.id,
+						delegated_to_job_id: delegate.id,
+						series: delegate.data.series,
+						year: delegate.data.year,
+					};
+				} catch (error: any) {
+					console.log(error);
+					return { error };
+				}
+			}
+			const responseSite = await axios.get(job.data.seriesYearPageURL, {
+				timeout: 15000,
+			});
+			const { document } = new JSDOM(responseSite.data).window;
+			const listView: HTMLElement | null = document.getElementById('list-view');
+			if (!listView) {
+				throw new Error('Error getting page with penalties.');
+			}
+			const mainDoc: HTMLDivElement | null = listView.querySelector(
+				'.decision-document-list'
+			);
+			if (!mainDoc) {
+				throw new Error('Error getting list of penalties.');
+			}
+			const allDocAnchors: NodeList = mainDoc.querySelectorAll('a');
+			const allDocsHref: string[] = [];
+			allDocAnchors.forEach((link: any) => {
+				const fileName = link.href
+					.slice(link.href.lastIndexOf('/') + 1)
+					.trim()
+					.toLowerCase();
+				const disallowedDoc = disallowedWordsInDocName.some((str) =>
+					fileName.toLowerCase().includes(str)
+				);
+				if (
+					!disallowedDoc &&
+					((fileName.includes('decision') && fileName.includes('car')) ||
+						(fileName.includes('offence') && fileName.includes('car')))
+				) {
+					const published = link.querySelector(
+						'.date-display-single'
+					)?.textContent;
+					if (!published) {
+						allDocsHref.push(link.href);
+						return;
+					}
+					const dateAndTime = published.split(' ');
+					const dateStrings = dateAndTime[0].split('.');
+					const reformattedDate =
+						'20' +
+						dateStrings[2] +
+						'/' +
+						dateStrings[1] +
+						'/' +
+						dateStrings[0] +
+						' ' +
+						dateAndTime[1];
+					if (
+						new Date(reformattedDate).getTime() + 24 * 60 * 60 * 1000 >=
+						new Date(docList[0].doc_date).getTime()
+					) {
+						allDocsHref.push(link.href);
+						return;
+					}
+				}
+			});
+			if (allDocsHref.length === 0) {
+				return {
+					status: 'Documents are up to date.',
+					series: job.data.series,
+					year: job.data.year,
+					new_documents_found: allDocsHref.length,
+				};
+			}
+			console.log(`Total number of new documents: ${allDocsHref.length}.`);
+			const results = await Promise.allSettled(
+				allDocsHref.map(
+					(href, i) =>
+						new Promise((resolve, reject) =>
+							setTimeout(async () => {
+								try {
+									const responseFile = await axios.get(fiaDomain + href, {
+										responseType: 'stream',
+										timeout: 15000,
+									});
+									const fileBuffer = await streamToBuffer(responseFile.data);
+									const readPDF = await readPDFPages(fileBuffer);
+									const transformed = transformToDecOffDoc(
+										href,
+										readPDF as any,
+										job.data.series as 'f1' | 'f2' | 'f3'
+									);
+									const docExists = await conn.models.Decision_Offence.findOne({
+										series: transformed.series,
+										doc_type: transformed.doc_type,
+										doc_name: transformed.doc_name,
+										doc_date: transformed.doc_date,
+										penalty_type: transformed.penalty_type,
+										grand_prix: transformed.grand_prix,
+										weekend: transformed.weekend,
+									});
+									if (docExists) {
+										console.log('Document already exists. Skipping.');
+										resolve(null);
+										return;
+									}
+									await conn.models.Decision_Offence.create({
+										...transformed,
+										manual_upload: false,
+									});
+									resolve(null);
+								} catch (error: any) {
+									reject(error);
+								}
+							}, 1000 * i)
+						)
+				)
+			);
+			return {
+				status: 'Finished updating new documents.',
+				series: job.data.series,
+				year: job.data.year,
+				new_documents_found: allDocsHref.length,
+				new_documents_processed: results.length,
+				successes: results.filter((obj) => obj.status === 'fulfilled').length,
+				failures: results.filter((obj) => obj.status === 'rejected').length,
+			};
+		} catch (error: any) {
+			console.log(error);
+			return { error };
+		}
+	});
+
+	// Updating all documents for the specified year.
 	workQueue.process('update-all', maxJobsPerWorker, async (job) => {
 		try {
 			const responseSite = await axios.get(job.data.seriesYearPageURL, {
@@ -33,13 +195,13 @@ function start() {
 			const { document } = new JSDOM(responseSite.data).window;
 			const listView: HTMLElement | null = document.getElementById('list-view');
 			if (!listView) {
-				throw new Error('Error getting main page');
+				throw new Error('Error getting page with penalties.');
 			}
 			const mainDoc: HTMLDivElement | null = listView.querySelector(
 				'.decision-document-list'
 			);
 			if (!mainDoc) {
-				throw new Error('Error getting document list.');
+				throw new Error('Error getting list of penalties.');
 			}
 			const allDocAnchors: NodeList = mainDoc.querySelectorAll('a');
 			const allDocsHref: string[] = [];
@@ -60,7 +222,12 @@ function start() {
 				}
 			});
 			if (allDocsHref.length === 0) {
-				return { value: 'Updating all files finished.' };
+				return {
+					status: 'No valid documents found.',
+					series: job.data.series,
+					year: job.data.year,
+					new_documents_found: allDocsHref.length,
+				};
 			}
 			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
 			const conn = await connectMongo(job.data.seriesYearDB);
