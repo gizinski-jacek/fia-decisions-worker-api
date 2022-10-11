@@ -65,7 +65,7 @@ function start() {
 			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
 			const conn = await connectMongo(job.data.seriesYearDB);
 			const results = await Promise.allSettled(
-				allDocsHref.slice(0, 3).map(
+				allDocsHref.map(
 					(href, i) =>
 						new Promise<void>((resolve, reject) =>
 							setTimeout(async () => {
