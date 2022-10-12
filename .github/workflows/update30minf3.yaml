@@ -1,0 +1,13 @@
+name: update-every-30m-FriSun
+on:
+  schedule:
+    - cron: '*/30 * * * 5,6,0'
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call F3 API route fetching new documents
+        run: |
+          curl --request GET \
+          --url '${{ secrets.UPDATE_F3_ENDPOINT }}' \
+          --header 'Authorization: Bearer ${{ secrets.CRON_JOB_SECRET }}'
