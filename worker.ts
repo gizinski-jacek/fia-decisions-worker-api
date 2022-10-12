@@ -257,7 +257,7 @@ function start() {
 									console.log(error);
 									reject(error);
 								}
-							}, 2000 * i)
+							}, 5000 * i)
 						)
 				)
 			);
