@@ -24,7 +24,6 @@ router.get('/', (req: any, res: any, next: any) => {
 router.get(
 	'/update-newest/decisions-offences/:series/:year',
 	async function (req: any, res: any, next: any) {
-		console.log(req.headers.referer);
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
 		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
