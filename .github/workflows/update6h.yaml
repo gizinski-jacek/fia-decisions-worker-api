@@ -1,4 +1,4 @@
-name: update-every-6h-Mon-Thu
+name: update-every-6h-MonThu
 on:
   schedule:
     - cron: '0 */6 * * 1-4'
