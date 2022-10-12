@@ -19,7 +19,7 @@ const workers = process.env.WEB_CONCURRENCY || 2;
 // The maximum number of jobs each worker should process at once. This will need to
 // be tuned for your application.If each job is mostly waiting on network responses
 // it can be much higher.If each job is CPU - intensive, it might need to be much lower.
-const maxJobsPerWorker = 50;
+const maxJobsPerWorker = 1;
 
 function start() {
 	// Connect to the named work queue.
@@ -153,7 +153,7 @@ function start() {
 								} catch (error: any) {
 									reject(error);
 								}
-							}, 1000 * i)
+							}, 2000 * i)
 						)
 				)
 			);
@@ -257,7 +257,7 @@ function start() {
 									console.log(error);
 									reject(error);
 								}
-							}, 1000 * i)
+							}, 2000 * i)
 						)
 				)
 			);
