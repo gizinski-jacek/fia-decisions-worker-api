@@ -1,2 +1,2 @@
-web: ts-node ./bin/www
-worker: ts-node worker.ts
+web: ts-node --files ./bin/www
+worker: ts-node --files worker.ts

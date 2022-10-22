@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import mongoose, { MongooseOptions } from 'mongoose';
 import { dbNameList } from '../myData/myData';
 
