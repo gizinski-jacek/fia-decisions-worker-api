@@ -352,10 +352,7 @@ export const transformToDecOffDoc = (
 	const month = date.toLocaleString([], { month: '2-digit' });
 	const year = date.toLocaleString([], { year: 'numeric' });
 	// Forcing 24 hour format.
-	const hour = date.toLocaleString('en-GB', {
-		hour: '2-digit',
-		hour12: 'false',
-	});
+	const hour = date.toLocaleString('en-GB', { hour: '2-digit' });
 	const minute = date.toLocaleString([], { minute: '2-digit' });
 	const docDate = year + '/' + month + '/' + day + ' ' + hour + ':' + minute;
 
