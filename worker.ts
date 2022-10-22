@@ -139,6 +139,7 @@ function start() {
 										penalty_type: transformed.penalty_type,
 										grand_prix: transformed.grand_prix,
 										weekend: transformed.weekend,
+										incident_title: transformed.incident_title,
 									});
 									if (docExists) {
 										console.log('Document already exists. Skipping.');
@@ -242,6 +243,7 @@ function start() {
 										penalty_type: transformed.penalty_type,
 										grand_prix: transformed.grand_prix,
 										weekend: transformed.weekend,
+										incident_title: transformed.incident_title,
 									});
 									if (docExists) {
 										console.log('Document already exists. Skipping.');
