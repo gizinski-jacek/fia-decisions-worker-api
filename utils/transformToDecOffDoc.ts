@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import {
 	DocumentInfo,
 	IncidentInfo,
@@ -284,6 +282,9 @@ export const transformToDecOffDoc = (
 		// Reminder to fix type error here
 		const key = incidentInfoFormatted[i];
 		const value = incidentInfoFormatted[i + 1] || '';
+		// TS check disabled for next line until I find a way to reconcile the
+		// problem of "key: string | string[] cannot be used as keyof IncidentInfo".
+		// @ts-ignore
 		incidentInfo[key] = value;
 	}
 
