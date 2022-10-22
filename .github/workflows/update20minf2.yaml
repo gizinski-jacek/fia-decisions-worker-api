@@ -1,4 +1,4 @@
-name: update-every-20m-FriSun
+name: update-every-20m-F2-FriSun
 on:
   schedule:
     - cron: '*/20 * * * 5,6,0'
