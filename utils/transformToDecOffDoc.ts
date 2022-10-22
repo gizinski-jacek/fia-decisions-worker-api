@@ -88,6 +88,10 @@ export const transformToDecOffDoc = (
 		if (str.charAt(0) === '-') {
 			str = str.slice(1).trim();
 		}
+		// Checking for extra dot after removing suffixes.
+		if (str.charAt(str.length - 1) === '.') {
+			str = str.slice(0, str.length - 1).trim();
+		}
 		return str;
 	})[0];
 
