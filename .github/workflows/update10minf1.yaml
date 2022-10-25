@@ -1,7 +1,7 @@
-name: update-every-15m-F1-FriSun
+name: update-every-10m-F1-FriSun
 on:
   schedule:
-    - cron: '*/15 * * * 5,6,0'
+    - cron: '*/10 * * * 5,6,0'
 jobs:
   cron:
     runs-on: ubuntu-latest
