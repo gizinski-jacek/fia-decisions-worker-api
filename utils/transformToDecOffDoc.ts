@@ -7,7 +7,7 @@ import {
 export const transformToDecOffDoc = (
 	// Value from anchor href property to decompose into file name, doc type and grand prix name.
 	string: string,
-	// Array of strings parsed from FIA Decision or Offence, but not Reprimand, documents parsed with pdfReader.
+	// Array of strings parsed from FIA Decision or Offence documents.
 	pdfDataArray: string[],
 	// Info to determine number of strings to slice off, F1 has 4 stewards, F2 and F3 has 3 stewards.
 	series: 'f1' | 'f2' | 'f3'
@@ -29,16 +29,15 @@ export const transformToDecOffDoc = (
 
 	// Checking for edge case where document might be marked as Decision or Offence
 	// but still has different format than the one we allow.
-	const requiredWords = [
+	const requiredFields = [
 		'competitor',
 		'time',
-		'session',
 		'fact',
 		'offence',
 		'decision',
 		'reason',
 	];
-	const valid = requiredWords.map((word) =>
+	const valid = requiredFields.map((word) =>
 		pdfDataArray.some((string) => string.toLowerCase().includes(word))
 	);
 	if (!valid.every((v) => v)) {
@@ -97,11 +96,23 @@ export const transformToDecOffDoc = (
 
 	// Trimming all document strings just in case.
 	const trimmedStringsArray = pdfDataArray.map((str) => str.trim());
-	// Extracting general document data fields, like From who, To whom, Document #, Date and Time.
-	const documentInfoStrings = trimmedStringsArray.slice(
+	// Extracting general document data fields, like "From", "To", "Document #", "Date" and "Time".
+	let documentInfoStrings = trimmedStringsArray.slice(
 		0,
 		trimmedStringsArray.indexOf('Time') + 2
 	);
+
+	// Bandaid fix for 2023 season pdf documents having different order of document info fields.
+	// Finding "From" and "To" fields and joining with "Document #"", "Date" and "Time" fields.
+	let differentFieldsOrder2023Doc: boolean = false;
+	if (documentInfoStrings.length <= 6) differentFieldsOrder2023Doc = true;
+	if (differentFieldsOrder2023Doc) {
+		const fromToFields = trimmedStringsArray.slice(
+			trimmedStringsArray.indexOf('From'),
+			trimmedStringsArray.indexOf('From') + 5
+		);
+		documentInfoStrings = fromToFields.concat(documentInfoStrings);
+	}
 
 	const documentSkipIndexes: number[] = [];
 	// To whom field is usually a two line text separated by comma, joining them.
@@ -128,20 +139,27 @@ export const transformToDecOffDoc = (
 		documentInfo[key] = value || '';
 	}
 
-	// Skipping general document data fields, extracting document Title,
+	// Skipping general document data fields, extracting document "Title",
 	// which includes year, Grand Prix name and race weekend date, and also
-	// extracting detailed incident data fields, like opening statement, No / Driver,
-	// Competitor, incident Time, Session, Fact, Offence and Decision.
+	// extracting detailed incident data fields, like opening statement, "No / Driver",
+	// "Competitor", incident "Time", "Session", "Fact", "Offence" and "Decision".
+	let incidentInfoStrings = trimmedStringsArray.slice(
+		trimmedStringsArray.indexOf('Time') + 2,
+		trimmedStringsArray.lastIndexOf('Reason')
+	);
+
+	// Continuation of bandaid fix form line (108).
+	// Finding and removing "From" and "To" fields and extra "The Stewards" string.
+	if (differentFieldsOrder2023Doc) {
+		incidentInfoStrings.splice(incidentInfoStrings.indexOf('The Stewards'), 6);
+	}
+
 	// Skipping first index containing the year, then skipping strings shorter
 	// than 4 characters, those are each letter of Grand Prix name with whitespaces.
-	// Replacing No / Driver field with Driver so it gets properly cast
-	// as key in schema model. Skipping document if Team Manager is present
-	// instead of No / Driver, as we're not interested in non-driver penalties.
-	const incidentInfoStrings = trimmedStringsArray
-		.slice(
-			trimmedStringsArray.indexOf('Time') + 2,
-			trimmedStringsArray.lastIndexOf('Reason')
-		)
+	// Replacing "No / Driver" field with Driver so it gets properly cast
+	// as key in schema model. Skipping document if "Team Manager" is present
+	// instead of "No / Driver", as we're not interested in non-driver penalties.
+	const incidentInfoStringsFormatted = incidentInfoStrings
 		.map((str, i, arr) => {
 			if (i !== 0 && str.length > 2) {
 				if (str.match(/no.\/.driver/im)) {
@@ -166,16 +184,16 @@ export const transformToDecOffDoc = (
 	let weekend: string;
 	let incidentInfoStringsWithoutWeekend: string[];
 	// Checking for edge case where date might be split into two strings.
-	if ((incidentInfoStrings[0] as string).length < 12) {
-		weekend = ((incidentInfoStrings[0] as string).trim() +
+	if ((incidentInfoStringsFormatted[0] as string).length < 12) {
+		weekend = ((incidentInfoStringsFormatted[0] as string).trim() +
 			' ' +
-			incidentInfoStrings[1]) as string;
-		incidentInfoStringsWithoutWeekend = incidentInfoStrings.slice(
+			incidentInfoStringsFormatted[1]) as string;
+		incidentInfoStringsWithoutWeekend = incidentInfoStringsFormatted.slice(
 			2
 		) as string[];
 	} else {
-		weekend = incidentInfoStrings[0] as string;
-		incidentInfoStringsWithoutWeekend = incidentInfoStrings.slice(
+		weekend = incidentInfoStringsFormatted[0] as string;
+		incidentInfoStringsWithoutWeekend = incidentInfoStringsFormatted.slice(
 			1
 		) as string[];
 	}
@@ -197,8 +215,8 @@ export const transformToDecOffDoc = (
 	// is an array of string, containing just one long string or list of strings.
 	// Using SkipIndexes array to skip indexes of string that are part of longer
 	// sentence / paragraph and were joined with previous string.
-	// Similar reasoning and method is used for strings between Decision and end of array.
-	// Joining string between Offence and Decision fields.
+	// Similar reasoning and method is used for strings between "Decision" and end of array.
+	// Joining string between "Offence" and "Decision" fields.
 	const incidentSkipIndexes: number[] = [];
 	const incidentInfoFormatted = incidentInfoStringsWithoutHeadline
 		.map((str, index) => {
@@ -300,8 +318,8 @@ export const transformToDecOffDoc = (
 		.filter((str) => str !== 'The Stewards')
 		.slice(-stewardCount);
 
-	// Skipping stewards names from the end of array, extracting
-	// Reason and strings after it and joining them into single paragraph.
+	// Skipping stewards names from the end of array, extracting "Reason"
+	// and strings after it and joining them into single paragraph.
 	const reasonContents = trimmedStringsArray
 		.slice(trimmedStringsArray.lastIndexOf('Reason') + 1)
 		.filter((str) => str !== 'The Stewards')
@@ -348,7 +366,7 @@ export const transformToDecOffDoc = (
 		}
 	}
 
-	// Joining Date and Time, creating Date object, extracting
+	// Joining "Date" and "Time", creating Date object, extracting
 	// year, month, day, hour and minute, joining them into string
 	// which will be a valid Date format if used to create new Date object.
 	const dateString = documentInfo.Date + ' ' + documentInfo.Time;
@@ -362,6 +380,7 @@ export const transformToDecOffDoc = (
 	const docDate = year + '/' + month + '/' + day + ' ' + hour + ':' + minute;
 
 	// Returning transformed strings as single formatted data object.
+	// If "Session" field is not present defaulting it to "N/A" value.
 	const data: TransformedPDFData = {
 		series: series,
 		doc_type: docType,
@@ -372,7 +391,11 @@ export const transformToDecOffDoc = (
 		weekend: weekend,
 		incident_title: incidentTitle,
 		document_info: documentInfo,
-		incident_info: { ...incidentInfo, Reason: reasonContents },
+		incident_info: {
+			...incidentInfo,
+			Session: incidentInfo.Session || 'N/A',
+			Reason: reasonContents,
+		},
 		stewards: stewards,
 	};
 	return data;
