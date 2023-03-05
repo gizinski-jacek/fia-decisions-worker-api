@@ -43,10 +43,10 @@ export const transformToDecOffDoc = (
 		console.log(`Incorrect document format: ${fileName}`);
 		throw new Error('Incorrect document format.');
 	}
-	// Matching against common duplicate file suffixes and removing it.
+	// Matching against common duplicate file suffixes and removing them.
 	// Replacing underscores and trimming.
 	const unsuffixedFilename = fileName
-		.replace(/(_|-){1}?0$/im, '')
+		.replace(/(_|-){1}0$/im, '')
 		.replace(/(_|-){1}?\(\d{1,}\)$/im, '')
 		.replaceAll('_', ' ')
 		.trim();
