@@ -17,13 +17,12 @@ export const transformToDecOffDoc = (
 	// Checking if string value comes from file name or from anchors href.
 	if (string.lastIndexOf('/') === -1) {
 		// Removing file extension.
-		fileName = string.slice(0, -4).replaceAll('_', ' ').toLowerCase();
+		fileName = string.slice(0, -4).toLowerCase();
 	} else {
 		// Extracting file name from href, removing extension.
 		fileName = string
 			.slice(string.lastIndexOf('/') + 1)
 			.slice(0, -4)
-			.replaceAll('_', ' ')
 			.toLowerCase();
 	}
 
@@ -44,12 +43,12 @@ export const transformToDecOffDoc = (
 		console.log(`Incorrect document format: ${fileName}`);
 		throw new Error('Incorrect document format.');
 	}
-
-	// Extracting end part of filename, matching against common duplicate file suffixes.
-	// Removing suffix if present.
+	// Matching against common duplicate file suffixes and removing it.
+	// Replacing underscores and trimming.
 	const unsuffixedFilename = fileName
-		.replace(/(_|-){1}?\d{1,}$/im, '')
+		.replace(/(_|-){1}?0$/im, '')
 		.replace(/(_|-){1}?\(\d{1,}\)$/im, '')
+		.replaceAll('_', ' ')
 		.trim();
 	// Extracting grand prix name.
 	const grandPrixName = unsuffixedFilename
