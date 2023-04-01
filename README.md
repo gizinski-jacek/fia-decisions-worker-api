@@ -61,7 +61,7 @@ Don't forget to add **.env** file with environment variables for the app.
 
 ## Status
 
-Project status: **_MOSTLY FINISHED_**
+Project status: **_FINISHED_**
 
 ## Contact
 
