@@ -7,12 +7,12 @@ export interface TransformedPDFData {
 	grand_prix: string;
 	weekend: string;
 	incident_title: string;
-	document_info: DocumentInfo;
-	incident_info: IncidentInfo;
+	document_info: DocumentDetails;
+	incident_info: IncidentDetails;
 	stewards: string[];
 }
 
-export interface DocumentInfo {
+export interface DocumentDetails {
 	From: string;
 	To: string;
 	Document: string;
@@ -20,7 +20,7 @@ export interface DocumentInfo {
 	Time: string;
 }
 
-export interface IncidentInfo {
+export interface IncidentDetails {
 	Headline: string;
 	Driver: string;
 	Competitor: string;
