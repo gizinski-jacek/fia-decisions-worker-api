@@ -3,7 +3,7 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { readPDFPages } from './utils/pdfReader';
 import { streamToBuffer } from './utils/streamToBuffer';
-import { transformToDecOffDoc } from './utils/transformToDecOffDoc';
+import { createDecOffDocument } from './utils/transformToDecOffDoc';
 import { disallowedWordsInDocName, fiaDomain } from './myData/myData';
 
 import throng from 'throng';
@@ -126,7 +126,7 @@ function start() {
 									});
 									const fileBuffer = await streamToBuffer(responseFile.data);
 									const readPDF = await readPDFPages(fileBuffer);
-									const transformed = transformToDecOffDoc(
+									const transformed = createDecOffDocument(
 										href,
 										readPDF as any,
 										job.data.series as 'f1' | 'f2' | 'f3'
@@ -230,7 +230,7 @@ function start() {
 									});
 									const fileBuffer = await streamToBuffer(responseFile.data);
 									const readPDF = await readPDFPages(fileBuffer);
-									const transformed = transformToDecOffDoc(
+									const transformed = createDecOffDocument(
 										href,
 										readPDF as any,
 										job.data.series as 'f1' | 'f2' | 'f3'

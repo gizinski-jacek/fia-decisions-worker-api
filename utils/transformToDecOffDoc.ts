@@ -375,7 +375,7 @@ const formatDate = (data: DocumentDetails): string => {
 	return year + '/' + month + '/' + day + ' ' + hour + ':' + minute;
 };
 
-export const transformToDecOffDoc = (
+export const createDecOffDocument = (
 	// Value from anchor href property to decompose into file name, doc type and grand prix name.
 	href: string,
 	// Array of strings parsed from FIA Decision or Offence documents.
