@@ -34,18 +34,18 @@ const connectMongo = async (dbName: string) => {
 			opts
 		);
 		if (dbName === dbNameList.other_documents_db) {
-			if (!client.models.Missing_Data_Doc) {
-				client.model('Missing_Data_Doc', require('../models/missingDoc'));
+			if (!client.models.Missing_Doc) {
+				client.model('Missing_Doc', require('../models/missingDoc'));
 			}
 			if (!client.models.Contact_Doc) {
 				client.model('Contact_Doc', require('../models/contactDoc'));
 			}
-			if (!client.models.Decision_Offence) {
-				client.model('Decision_Offence', require('../models/decisionOffence'));
+			if (!client.models.Penalty_Doc) {
+				client.model('Penalty_Doc', require('../models/penaltyDoc'));
 			}
 		} else {
-			if (!client.models.Decision_Offence) {
-				client.model('Decision_Offence', require('../models/decisionOffence'));
+			if (!client.models.Penalty_Doc) {
+				client.model('Penalty_Doc', require('../models/penaltyDoc'));
 			}
 		}
 
@@ -60,18 +60,18 @@ const connectMongo = async (dbName: string) => {
 			opts
 		);
 		if (dbName === dbNameList.other_documents_db) {
-			if (!conn.models.Missing_Data_Doc) {
-				conn.model('Missing_Data_Doc', require('../models/missingDoc'));
+			if (!conn.models.Missing_Doc) {
+				conn.model('Missing_Doc', require('../models/missingDoc'));
 			}
 			if (!conn.models.Contact_Doc) {
 				conn.model('Contact_Doc', require('../models/contactDoc'));
 			}
-			if (!conn.models.Decision_Offence) {
-				conn.model('Decision_Offence', require('../models/decisionOffence'));
+			if (!conn.models.Penalty_Doc) {
+				conn.model('Penalty_Doc', require('../models/penaltyDoc'));
 			}
 		} else {
-			if (!conn.models.Decision_Offence) {
-				conn.model('Decision_Offence', require('../models/decisionOffence'));
+			if (!conn.models.Penalty_Doc) {
+				conn.model('Penalty_Doc', require('../models/penaltyDoc'));
 			}
 		}
 		return conn;
