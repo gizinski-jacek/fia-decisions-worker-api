@@ -27,7 +27,7 @@ const DecisionOffenceSchema = new Schema<DecisionOffenceModel>(
 			Time: { type: String, trim: true, required: true },
 			Session: { type: String, trim: true, required: true },
 			Fact: [{ type: String, trim: true, required: true }],
-			Offence: { type: String, trim: true, required: true },
+			Infringment: { type: String, trim: true, required: true },
 			Decision: [{ type: String, trim: true, required: true }],
 			Reason: { type: String, trim: true, required: true },
 		},
