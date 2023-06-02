@@ -3,7 +3,7 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { readPDFPages } from './utils/pdfReader';
 import { streamToBuffer } from './utils/streamToBuffer';
-import { createDecOffDocument } from './utils/transformToDecOffDoc';
+import { createPenaltyDocument } from './utils/transformToPenaltyDoc';
 import { disallowedWordsInDocName, fiaDomain } from './myData/myData';
 
 import throng from 'throng';
@@ -29,7 +29,7 @@ function start() {
 	workQueue.process('update-newest', maxJobsPerWorker, async (job) => {
 		try {
 			const conn = await connectMongo(job.data.seriesYearDB);
-			const docList = await conn.models.Decision_Offence.find()
+			const docList = await conn.models.Penalty_Doc.find()
 				.sort({ doc_date: -1 })
 				.limit(1)
 				.exec();
@@ -76,7 +76,9 @@ function start() {
 				if (
 					!disallowedDoc &&
 					((fileName.includes('decision') && fileName.includes('car')) ||
-						(fileName.includes('offence') && fileName.includes('car')))
+						(fileName.includes('offence') && fileName.includes('car')) ||
+						(fileName.includes('infringment') && fileName.includes('car')) ||
+						(fileName.includes('infringement') && fileName.includes('car')))
 				) {
 					const published = link.querySelector(
 						'.date-display-single'
@@ -115,7 +117,7 @@ function start() {
 			}
 			console.log(`Total number of new documents: ${allDocsHref.length}.`);
 			const results = await Promise.allSettled(
-				allDocsHref.map(
+				allDocsHref.reverse().map(
 					(href, i) =>
 						new Promise((resolve, reject) =>
 							setTimeout(async () => {
@@ -126,12 +128,12 @@ function start() {
 									});
 									const fileBuffer = await streamToBuffer(responseFile.data);
 									const readPDF = await readPDFPages(fileBuffer);
-									const transformed = createDecOffDocument(
+									const transformed = createPenaltyDocument(
 										href,
 										readPDF as any,
 										job.data.series as 'f1' | 'f2' | 'f3'
 									);
-									const docExists = await conn.models.Decision_Offence.findOne({
+									const docExists = await conn.models.Penalty_Doc.findOne({
 										series: transformed.series,
 										doc_type: transformed.doc_type,
 										doc_name: transformed.doc_name,
@@ -146,7 +148,7 @@ function start() {
 										resolve(null);
 										return;
 									}
-									await conn.models.Decision_Offence.create({
+									await conn.models.Penalty_Doc.create({
 										...transformed,
 										manual_upload: false,
 									});
@@ -203,7 +205,9 @@ function start() {
 				if (
 					!disallowedDoc &&
 					((fileName.includes('decision') && fileName.includes('car')) ||
-						(fileName.includes('offence') && fileName.includes('car')))
+						(fileName.includes('offence') && fileName.includes('car')) ||
+						(fileName.includes('infringment') && fileName.includes('car')) ||
+						(fileName.includes('infringement') && fileName.includes('car')))
 				) {
 					allDocsHref.push(link.href);
 				}
@@ -219,7 +223,7 @@ function start() {
 			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
 			const conn = await connectMongo(job.data.seriesYearDB);
 			const results = await Promise.allSettled(
-				allDocsHref.map(
+				allDocsHref.reverse().map(
 					(href, i) =>
 						new Promise<void>((resolve, reject) =>
 							setTimeout(async () => {
@@ -230,12 +234,12 @@ function start() {
 									});
 									const fileBuffer = await streamToBuffer(responseFile.data);
 									const readPDF = await readPDFPages(fileBuffer);
-									const transformed = createDecOffDocument(
+									const transformed = createPenaltyDocument(
 										href,
 										readPDF as any,
 										job.data.series as 'f1' | 'f2' | 'f3'
 									);
-									const docExists = await conn.models.Decision_Offence.findOne({
+									const docExists = await conn.models.Penalty_Doc.findOne({
 										series: transformed.series,
 										doc_type: transformed.doc_type,
 										doc_name: transformed.doc_name,
@@ -250,7 +254,7 @@ function start() {
 										resolve();
 										return;
 									}
-									await conn.models.Decision_Offence.create({
+									await conn.models.Penalty_Doc.create({
 										...transformed,
 										manual_upload: false,
 									});
@@ -259,7 +263,7 @@ function start() {
 									console.log(error);
 									reject(error);
 								}
-							}, 3000 * i)
+							}, 1000 * i)
 						)
 				)
 			);
