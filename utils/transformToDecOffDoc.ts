@@ -418,7 +418,7 @@ export const createDecOffDocument = (
 	// F1 has 4 stewards, F2 and F3 has 3 stewards.
 	series: 'f1' | 'f2' | 'f3'
 ): TransformedPDFData => {
-	// Check if file has accepted format.
+	// Check if file has correct format.
 	checkForRequiredFields(pdfDataArray);
 
 	const filename = getCleanFilename(href);
