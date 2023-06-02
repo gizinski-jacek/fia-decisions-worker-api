@@ -25,9 +25,9 @@ const getCleanFilename = (string: string): string => {
 	return cleanedUp;
 };
 
-// Checking for edge case where document might be marked as Decision or Offence
-// but still has different format than the one allowed.
-const checkForRequiredFields = (data: string[]): boolean => {
+// Checking for edge case where document might be marked as Offence, Decision or Infringment
+// but still have different format than the one allowed.
+const checkForRequiredFields = (data: string[]): void => {
 	const requiredFields = [
 		'competitor',
 		'time',
@@ -36,18 +36,51 @@ const checkForRequiredFields = (data: string[]): boolean => {
 		'decision',
 		'reason',
 	];
-	const fieldsExist = requiredFields.map((word) =>
-		data.some((string) => string.toLowerCase().includes(word))
-	);
-	return fieldsExist.every((v) => v);
+	const requiredFieldsAlt = [
+		'competitor',
+		'time',
+		'fact',
+		'infringment',
+		'decision',
+		'reason',
+	];
+	const missingFields = [] as string[];
+	const missingFieldsAlt = [] as string[];
+	for (let i = 0; i < requiredFields.length; i++) {
+		if (
+			!data.some((string) => string.toLowerCase().includes(requiredFields[i]))
+		) {
+			missingFields.push(requiredFields[i].toUpperCase());
+		}
+	}
+	for (let i = 0; i < requiredFieldsAlt.length; i++) {
+		if (
+			!data.some((string) =>
+				string.toLowerCase().includes(requiredFieldsAlt[i])
+			)
+		) {
+			missingFieldsAlt.push(requiredFieldsAlt[i].toUpperCase());
+		}
+	}
+	if (missingFields.length && missingFieldsAlt.length) {
+		const missing = missingFields.concat(missingFieldsAlt);
+		console.log(
+			`Incorrect document format. Missing fields: ${missing.join(', ')}.`
+		);
+		throw new Error(
+			`Incorrect document format. Missing fields: ${missing.join(', ')}.`
+		);
+	}
 };
 
-// Checking if document file name is titled Offence or Decision.
+// Checking if document file name is titled Offence, Decision or Infringment.
 const getDocumentType = (filename: string, gpName: string): string => {
 	const str = filename.replace(gpName, '').toLowerCase().trim().slice(0, 12);
 	return str.includes('offence')
 		? 'offence'
 		: str.includes('decision')
+		? 'decision'
+		: str.includes('infringment')
 		? 'decision'
 		: 'wrong doc type';
 };
@@ -59,14 +92,17 @@ const getIncidentTitle = (filename: string, gpname: string): string => {
 	if (str.charAt(0) === '-') {
 		str = str.slice(1).trim();
 	}
-	// Checking for "f1", "f2", "f3", "offence" and "decision" word, removing it and trimming whitespaces.
+	// Checking for "f1", "f2", "f3", "offence", "decision" and "infringment" words,
+	// removing them and trimming whitespaces.
 	if (
 		str
 			.slice(0, 12)
 			.trim()
-			.match(/(offence|decision){1}/im)
+			.match(/(offence|decision|infringment){1}/im)
 	) {
-		str = str.replace(/(f(1|2|3)\s)?(offence|decision){1}/im, '').trim();
+		str = str
+			.replace(/(f(1|2|3)\s)?(offence|decision|infringment){1}/im, '')
+			.trim();
 	}
 	// Checking for a dash, removing it and trimming whitespaces.
 	if (str.charAt(0) === '-') {
@@ -92,10 +128,6 @@ const splitPDFData = (
 	// Extracting general document data fields, like "From", "To", "Document #", "Date" and "Time".
 	const fromToFields = data.slice(data.indexOf('From'), data.indexOf('To') + 3);
 	// "To" whom field is a two line text separated by comma, joining them.
-	const toWhomRecipient =
-		fromToFields[fromToFields.length - 2] +
-		' ' +
-		fromToFields[fromToFields.length - 1];
 	const documentInfoFixed = fromToFields
 		.map((str, i) => {
 			if (i === 3 && fromToFields[i + 1]) {
@@ -114,7 +146,7 @@ const splitPDFData = (
 	const documentStrings = documentInfoFixed.concat(docDateTimeFields);
 
 	// Extracting incident details fields, like opening statement, "No / Driver",
-	// "Competitor", incident "Time", "Session", "Fact", "Offence" and "Decision".
+	// "Competitor", incident "Time", "Session", "Fact", "Offence/Infringment" and "Decision".
 	const incidentStrings = data.slice(
 		data.indexOf('Competitor') - 2,
 		data.lastIndexOf('Reason')
@@ -149,7 +181,8 @@ const splitPDFData = (
 };
 
 // Replacing "No / Driver" field with "Driver" so it gets properly cast
-// as key in schema model. Skipping document if "Team Manager" is present
+// as key in schema model. Replacing "Offence" field with "Infringment".
+// for constistency. Skipping document if "Team Manager" is present
 // instead of "No / Driver", as we're not interested in non-driver penalties.
 const cleanupIncidentDetails = (data: string[]): string[] => {
 	const formatted = data
@@ -162,7 +195,9 @@ const cleanupIncidentDetails = (data: string[]): string[] => {
 				arr[i + 1].toLowerCase().trim() === 'manager'
 			) {
 				console.log('Not a driver penalty. Skipping.');
-				throw new Error('Not a driver penalty. Skipping.');
+				throw new Error('Not a driver penalty. Skipping document.');
+			} else if (i % 2 === 0 && str.toLowerCase().trim() === 'offence') {
+				return 'Infringment';
 			} else if (str === 'The Stewards') {
 				return;
 			} else {
@@ -202,7 +237,7 @@ const getWeekendDate = (data: string[], headlineIndex: number): string => {
 };
 
 // The array should now only contain detailed incident data strings.
-// Strings after Fact and before Offence describe facts about incident,
+// Strings after Fact and before Infringment describe facts about incident,
 // they can be single line or several lines long, or a list of changed
 // car components indicated by colon. In case of the former they get joined,
 // in latter case they get returned as is. In both cases the returned value
@@ -210,7 +245,7 @@ const getWeekendDate = (data: string[], headlineIndex: number): string => {
 // Using SkipIndexes array to skip indexes of string that are part of longer
 // sentence / paragraph and were joined with previous string.
 // Similar reasoning and method is used for strings between "Decision" and end of array.
-// Joining string between "Offence" and "Decision" fields.
+// Joining string between "Infringment" and "Decision" fields.
 const splitIncidentStrings = (
 	data: string[]
 ): (string | string[] | undefined)[] => {
@@ -220,19 +255,18 @@ const splitIncidentStrings = (
 			if (incidentSkipIndexes.indexOf(index) !== -1) {
 				return;
 			}
-
 			if (data[index - 1] === 'Fact') {
 				const arr: string[] = [];
 				let i = index;
 				if (i === index && data[i]?.charAt(data[i].length - 1) !== ':') {
-					while (data[i] !== 'Offence') {
+					while (data[i] !== 'Infringment') {
 						arr.push(data[i] as string);
 						incidentSkipIndexes.push(i);
 						i++;
 					}
 					return arr.join(' ');
 				} else {
-					while (data[i] !== 'Offence') {
+					while (data[i] !== 'Infringment') {
 						if ((data[i + 1] as string).length < 6) {
 							arr.push(data[i] + ' ' + data[i + 1]);
 							incidentSkipIndexes.push(i, i + 1);
@@ -246,7 +280,7 @@ const splitIncidentStrings = (
 				}
 			}
 
-			if (data[index - 1] === 'Offence') {
+			if (data[index - 1] === 'Infringment') {
 				const arr: string[] = [];
 				let i = index;
 				while (data[i] !== 'Decision') {
@@ -378,19 +412,16 @@ const formatDate = (data: DocumentDetails): string => {
 export const createDecOffDocument = (
 	// Value from anchor href property to decompose into file name, doc type and grand prix name.
 	href: string,
-	// Array of strings parsed from FIA Decision or Offence documents.
+	// Array of strings parsed from FIA documents.
 	pdfDataArray: string[],
-	// Info to determine number of strings to slice off, F1 has 4 stewards, F2 and F3 has 3 stewards.
+	// Information to determine number of strings for stewards data,
+	// F1 has 4 stewards, F2 and F3 has 3 stewards.
 	series: 'f1' | 'f2' | 'f3'
 ): TransformedPDFData => {
-	const filename = getCleanFilename(href);
-
 	// Check if file has accepted format.
-	const fileIsValid = checkForRequiredFields(pdfDataArray);
-	if (!fileIsValid) {
-		console.log(`Incorrect document format: ${filename}`);
-		throw new Error('Incorrect document format.');
-	}
+	checkForRequiredFields(pdfDataArray);
+
+	const filename = getCleanFilename(href);
 
 	// Extracting grand prix name.
 	const grandPrixName = filename.slice(0, filename.indexOf('-')).trim();
