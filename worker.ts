@@ -156,7 +156,7 @@ function start() {
 								} catch (error: any) {
 									reject(error);
 								}
-							}, 3000 * i)
+							}, 2000 * i)
 						)
 				)
 			);
@@ -263,7 +263,7 @@ function start() {
 									console.log(error);
 									reject(error);
 								}
-							}, 1000 * i)
+							}, 2000 * i)
 						)
 				)
 			);
