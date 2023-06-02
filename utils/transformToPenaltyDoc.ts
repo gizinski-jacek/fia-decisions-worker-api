@@ -25,7 +25,7 @@ const getCleanFilename = (string: string): string => {
 	return cleanedUp;
 };
 
-// Checking for edge case where document might be marked as Offence, Decision or Infringment
+// Checking for edge case where document might be marked as Offence, Decision or Infringement
 // but still have different format than the one allowed.
 const checkForRequiredFields = (data: string[]): void => {
 	const requiredFields = [
@@ -40,7 +40,7 @@ const checkForRequiredFields = (data: string[]): void => {
 		'competitor',
 		'time',
 		'fact',
-		'infringment',
+		'infringement',
 		'decision',
 		'reason',
 	];
@@ -63,7 +63,7 @@ const checkForRequiredFields = (data: string[]): void => {
 		}
 	}
 	if (missingFields.length && missingFieldsAlt.length) {
-		const missing = missingFields.concat(missingFieldsAlt);
+		const missing = Array.from(new Set(missingFields.concat(missingFieldsAlt)));
 		console.log(
 			`Incorrect document format. Missing fields: ${missing.join(', ')}.`
 		);
@@ -73,15 +73,15 @@ const checkForRequiredFields = (data: string[]): void => {
 	}
 };
 
-// Checking if document file name is titled Offence, Decision or Infringment.
+// Checking if document file name is titled Offence, Decision or Infringement.
 const getDocumentType = (filename: string, gpName: string): string => {
 	const str = filename.replace(gpName, '').toLowerCase().trim().slice(0, 12);
 	return str.includes('offence')
 		? 'offence'
 		: str.includes('decision')
 		? 'decision'
-		: str.includes('infringment')
-		? 'decision'
+		: str.includes('infringement')
+		? 'infringement'
 		: 'wrong doc type';
 };
 
@@ -92,16 +92,16 @@ const getIncidentTitle = (filename: string, gpname: string): string => {
 	if (str.charAt(0) === '-') {
 		str = str.slice(1).trim();
 	}
-	// Checking for "f1", "f2", "f3", "offence", "decision" and "infringment" words,
+	// Checking for "f1", "f2", "f3", "offence", "decision" and "infringement" words,
 	// removing them and trimming whitespaces.
 	if (
 		str
 			.slice(0, 12)
 			.trim()
-			.match(/(offence|decision|infringment){1}/im)
+			.match(/(offence|decision|infringement){1}/im)
 	) {
 		str = str
-			.replace(/(f(1|2|3)\s)?(offence|decision|infringment){1}/im, '')
+			.replace(/(f(1|2|3)\s)?(offence|decision|infringement){1}/im, '')
 			.trim();
 	}
 	// Checking for a dash, removing it and trimming whitespaces.
@@ -146,7 +146,7 @@ const splitPDFData = (
 	const documentStrings = documentInfoFixed.concat(docDateTimeFields);
 
 	// Extracting incident details fields, like opening statement, "No / Driver",
-	// "Competitor", incident "Time", "Session", "Fact", "Offence/Infringment" and "Decision".
+	// "Competitor", incident "Time", "Session", "Fact", "Offence/Infringement" and "Decision".
 	const incidentStrings = data.slice(
 		data.indexOf('Competitor') - 2,
 		data.lastIndexOf('Reason')
@@ -181,7 +181,7 @@ const splitPDFData = (
 };
 
 // Replacing "No / Driver" field with "Driver" so it gets properly cast
-// as key in schema model. Replacing "Offence" field with "Infringment".
+// as key in schema model. Replacing "Offence" field with "Infringement".
 // for constistency. Skipping document if "Team Manager" is present
 // instead of "No / Driver", as we're not interested in non-driver penalties.
 const cleanupIncidentDetails = (data: string[]): string[] => {
@@ -196,8 +196,8 @@ const cleanupIncidentDetails = (data: string[]): string[] => {
 			) {
 				console.log('Not a driver penalty. Skipping.');
 				throw new Error('Not a driver penalty. Skipping document.');
-			} else if (i % 2 === 0 && str.toLowerCase().trim() === 'offence') {
-				return 'Infringment';
+			} else if (str.toLowerCase().trim() === 'offence') {
+				return 'Infringement';
 			} else if (str === 'The Stewards') {
 				return;
 			} else {
@@ -237,7 +237,7 @@ const getWeekendDate = (data: string[], headlineIndex: number): string => {
 };
 
 // The array should now only contain detailed incident data strings.
-// Strings after Fact and before Infringment describe facts about incident,
+// Strings after Fact and before Infringement describe facts about incident,
 // they can be single line or several lines long, or a list of changed
 // car components indicated by colon. In case of the former they get joined,
 // in latter case they get returned as is. In both cases the returned value
@@ -245,7 +245,7 @@ const getWeekendDate = (data: string[], headlineIndex: number): string => {
 // Using SkipIndexes array to skip indexes of string that are part of longer
 // sentence / paragraph and were joined with previous string.
 // Similar reasoning and method is used for strings between "Decision" and end of array.
-// Joining string between "Infringment" and "Decision" fields.
+// Joining string between "Infringement" and "Decision" fields.
 const splitIncidentStrings = (
 	data: string[]
 ): (string | string[] | undefined)[] => {
@@ -259,14 +259,14 @@ const splitIncidentStrings = (
 				const arr: string[] = [];
 				let i = index;
 				if (i === index && data[i]?.charAt(data[i].length - 1) !== ':') {
-					while (data[i] !== 'Infringment') {
+					while (data[i] !== 'Infringement') {
 						arr.push(data[i] as string);
 						incidentSkipIndexes.push(i);
 						i++;
 					}
 					return arr.join(' ');
 				} else {
-					while (data[i] !== 'Infringment') {
+					while (data[i] !== 'Infringement') {
 						if ((data[i + 1] as string).length < 6) {
 							arr.push(data[i] + ' ' + data[i + 1]);
 							incidentSkipIndexes.push(i, i + 1);
@@ -280,7 +280,7 @@ const splitIncidentStrings = (
 				}
 			}
 
-			if (data[index - 1] === 'Infringment') {
+			if (data[index - 1] === 'Infringement') {
 				const arr: string[] = [];
 				let i = index;
 				while (data[i] !== 'Decision') {
@@ -409,7 +409,7 @@ const formatDate = (data: DocumentDetails): string => {
 	return year + '/' + month + '/' + day + ' ' + hour + ':' + minute;
 };
 
-export const createDecOffDocument = (
+export const createPenaltyDocument = (
 	// Value from anchor href property to decompose into file name, doc type and grand prix name.
 	href: string,
 	// Array of strings parsed from FIA documents.
@@ -418,8 +418,13 @@ export const createDecOffDocument = (
 	// F1 has 4 stewards, F2 and F3 has 3 stewards.
 	series: 'f1' | 'f2' | 'f3'
 ): TransformedPDFData => {
+	// Fixing grammar error in official documents.
+	const fixedPDfDataArray = pdfDataArray
+		.map((string) => string.replaceAll('infringment', 'infringement'))
+		.map((string) => string.replaceAll('Infringment', 'Infringement'));
+
 	// Check if file has correct format.
-	checkForRequiredFields(pdfDataArray);
+	checkForRequiredFields(fixedPDfDataArray);
 
 	const filename = getCleanFilename(href);
 
