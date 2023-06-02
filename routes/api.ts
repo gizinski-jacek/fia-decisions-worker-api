@@ -22,7 +22,7 @@ router.get('/', (req: any, res: any, next: any) => {
 });
 
 router.get(
-	'/update-newest/decisions-offences/:series/:year?',
+	'/update-newest/penalties/:series/:year?',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
@@ -67,7 +67,7 @@ router.get(
 );
 
 router.get(
-	'/update-all/decisions-offences/:series/:year?',
+	'/update-all/penalties/:series/:year?',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
