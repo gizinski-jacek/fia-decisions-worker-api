@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import { DecisionOffenceModel } from '../types/myTypes';
+import { PenaltyModel } from '../types/myTypes';
 
 const Schema = mongoose.Schema;
 
-const DecisionOffenceSchema = new Schema<DecisionOffenceModel>(
+const PenaltySchema = new Schema<PenaltyModel>(
 	{
 		series: { type: String, trim: true, required: true },
 		doc_type: { type: String, trim: true, required: true },
@@ -27,7 +27,7 @@ const DecisionOffenceSchema = new Schema<DecisionOffenceModel>(
 			Time: { type: String, trim: true, required: true },
 			Session: { type: String, trim: true, required: true },
 			Fact: [{ type: String, trim: true, required: true }],
-			Infringment: { type: String, trim: true, required: true },
+			Infringement: { type: String, trim: true, required: true },
 			Decision: [{ type: String, trim: true, required: true }],
 			Reason: { type: String, trim: true, required: true },
 		},
@@ -37,4 +37,4 @@ const DecisionOffenceSchema = new Schema<DecisionOffenceModel>(
 	{ timestamps: true }
 );
 
-module.exports = DecisionOffenceSchema;
+module.exports = PenaltySchema;
