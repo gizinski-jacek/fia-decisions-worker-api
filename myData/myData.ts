@@ -59,4 +59,5 @@ export const disallowedWordsInDocName = [
 	'alledgedly score',
 	'right of review',
 	'petition to review',
+	'summons',
 ];
