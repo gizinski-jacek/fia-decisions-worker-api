@@ -441,7 +441,7 @@ export const createPenaltyDocument = (
 		headlineStrings,
 		reasonAndStewardsStrings,
 		weekendDate,
-	} = splitPDFData(pdfDataArray);
+	} = splitPDFData(fixedPDfDataArray);
 
 	const documentDetails = formatDocumentDetails(documentStrings);
 
