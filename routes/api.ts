@@ -15,7 +15,7 @@ router.get('/', (req: any, res: any, next: any) => {
 		`<main>
 				<h2>FIA Penalties backend API.</h2>
 				<h3>Handles bulk document updating.</h3>
-				<p><a href=https://github.com/gizinski-jacek/fia-penalties-bulk-update-api>Backend API Github Repository</a></p>
+				<p><a href=https://github.com/gizinski-jacek/fia-decisions-worker-api>Backend API Github Repository</a></p>
 				<p><a href=https://github.com/gizinski-jacek/fia-decisions>NextJS Client Github Repository</a></p>
 			</main>`
 	);

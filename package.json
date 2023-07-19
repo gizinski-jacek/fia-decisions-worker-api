@@ -1,5 +1,5 @@
 {
-	"name": "fia-penalties-bulk-update-api",
+	"name": "fia-decisions-worker-api",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
