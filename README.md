@@ -4,12 +4,14 @@ Express server handling long-running background tasks to complement [FIA decisio
 
 ## Table of contents
 
-- [Github & Live](#github--live)
-- [Getting Started](#getting-started)
-- [Deploy](#deploy)
-- [Features](#features)
-- [Status](#status)
-- [Contact](#contact)
+- [FIA Formula penalties background worker API](#fia-formula-penalties-background-worker-api)
+  - [Table of contents](#table-of-contents)
+- [Github \& Live](#github--live)
+  - [Getting Started](#getting-started)
+  - [Deploy](#deploy)
+  - [Features](#features)
+  - [Status](#status)
+  - [Contact](#contact)
 
 # Github & Live
 
@@ -51,7 +53,14 @@ heroku ps:scale worker=1
 heroku open
 ```
 
-Don't forget to add **.env** file with environment variables for the app.
+Don't forget to add **.env** file with these environment variables for the app:
+
+```
+MONGODB_URI
+REDIS_URL
+CRON_JOB_UPDATE_NEWEST_SECRET
+CRON_JOB_UPDATE_ALL_SECRET
+```
 
 ## Features
 
