@@ -10,7 +10,10 @@ import throng from 'throng';
 import Queue from 'bull';
 
 // Connect to a local redis instance locally, and the Heroku-provided URL in production.
-const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const REDIS_URL =
+	process.env.NODE_ENV === 'production'
+		? process.env.REDIS_URL
+		: 'redis://127.0.0.1:6379';
 
 // Spin up multiple processes to handle jobs to take advantage of more CPU cores.
 // See: https://devcenter.heroku.com/articles/node-concurrency for more info.
@@ -22,6 +25,11 @@ const workers = process.env.WEB_CONCURRENCY || 2;
 const maxJobsPerWorker = 1;
 
 function start() {
+	if (!REDIS_URL) {
+		throw new Error(
+			'Please define the REDIS_URL environment variable inside .env.local'
+		);
+	}
 	// Connect to the named work queue.
 	let workQueue = new Queue('worker', REDIS_URL);
 	// Processing named jobs.
