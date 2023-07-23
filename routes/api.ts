@@ -28,22 +28,21 @@ router.get(
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
 		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
 		try {
-			if (!process.env.CRON_JOB_UPDATE_NEWEST_SECRET) {
+			const { CRON_JOB_UPDATE_NEWEST_SECRET } = process.env;
+			if (!CRON_JOB_UPDATE_NEWEST_SECRET) {
 				throw new Error(
 					'Please define CRON_JOB_UPDATE_NEWEST_SECRET environment variable inside .env.local'
 				);
 			}
 			const { authorization } = req.headers;
-			if (
-				authorization === `Bearer ${process.env.CRON_JOB_UPDATE_NEWEST_SECRET}`
-			) {
+			if (authorization === `Bearer ${CRON_JOB_UPDATE_NEWEST_SECRET}`) {
 				const series = supportedSeries.find(
 					(s) => s === req.params.series.toLowerCase()
 				);
-				const year = req.params.year || new Date().getFullYear().toString();
 				if (!series) {
 					return res.status(422).json('Unsupported series.');
 				}
+				const year = req.params.year || new Date().getFullYear().toString();
 				const seriesYearDB = dbNameList[`${series}_${year}_db`];
 				const seriesYearPageURL = fiaPageList[`${series}_${year}_page`];
 				if (!seriesYearDB || !seriesYearPageURL) {
@@ -73,22 +72,21 @@ router.get(
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
 		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
 		try {
-			if (!process.env.CRON_JOB_UPDATE_ALL_SECRET) {
+			const { CRON_JOB_UPDATE_ALL_SECRET } = process.env;
+			if (!CRON_JOB_UPDATE_ALL_SECRET) {
 				throw new Error(
 					'Please define CRON_JOB_UPDATE_ALL_SECRET environment variable inside .env.local'
 				);
 			}
 			const { authorization } = req.headers;
-			if (
-				authorization === `Bearer ${process.env.CRON_JOB_UPDATE_ALL_SECRET}`
-			) {
+			if (authorization === `Bearer ${CRON_JOB_UPDATE_ALL_SECRET}`) {
 				const series = supportedSeries.find(
 					(s) => s === req.params.series.toLowerCase()
 				);
-				const year = req.params.year || new Date().getFullYear().toString();
 				if (!series) {
 					return res.status(422).json('Unsupported series.');
 				}
+				const year = req.params.year || new Date().getFullYear().toString();
 				const seriesYearDB = dbNameList[`${series}_${year}_db`];
 				const seriesYearPageURL = fiaPageList[`${series}_${year}_page`];
 				if (!seriesYearDB || !seriesYearPageURL) {
