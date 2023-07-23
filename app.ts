@@ -28,7 +28,10 @@ const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
 // Connect to a local redis intance locally, and the Heroku-provided URL in production
-const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const REDIS_URL =
+	process.env.NODE_ENV === 'production'
+		? process.env.REDIS_URL
+		: 'redis://127.0.0.1:6379';
 
 const app = express();
 // Create / Connect to a named work queue
