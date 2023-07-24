@@ -80,7 +80,7 @@ const connectMongo = async (dbName: string) => {
 		return conn;
 	} catch (error) {
 		console.log(error);
-		return new Error('Error connecting to database.');
+		throw new Error('Error connecting to database.');
 	}
 };
 
