@@ -1,4 +1,6 @@
-import { dbNameList, fiaPageList, supportedSeries } from '../myData/myData';
+import connectMongoDb from '../mongo/mongo';
+import { fiaDomain, supportedSeries } from '../myData/myData';
+import { SeriesDataDocModel } from 'types/myTypes';
 var Queue = require('bull');
 var express = require('express');
 
@@ -22,7 +24,7 @@ router.get('/', (req: any, res: any, next: any) => {
 });
 
 router.get(
-	'/update-newest/penalties/:series/:year?',
+	'/update-newest/penalties/:series/:year',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
@@ -36,37 +38,70 @@ router.get(
 			}
 			const { authorization } = req.headers;
 			if (authorization === `Bearer ${CRON_JOB_UPDATE_NEWEST_SECRET}`) {
-				const series = supportedSeries.find(
-					(s) => s === req.params.series.toLowerCase()
-				);
+				const series: string = req.params.series;
+				const year: string = req.params.year;
 				if (!series) {
-					return res.status(422).json('Unsupported series.');
+					return res.status(422).json('Must provide a Series.');
 				}
-				const year = req.params.year || new Date().getFullYear().toString();
-				const seriesYearDB = dbNameList[`${series}_${year}_db`];
-				const seriesYearPageURL = fiaPageList[`${series}_${year}_page`];
-				if (!seriesYearDB || !seriesYearPageURL) {
-					return res.status(422).json('Unsupported year.');
+				if (!year) {
+					return res.status(422).json('Must provide a Year.');
 				}
-				const job = await workQueue.add('update-newest', {
-					series,
-					year,
-					seriesYearDB,
-					seriesYearPageURL,
+				const seriesValid = supportedSeries.find(
+					(s) => s.toLowerCase() === series.toLowerCase()
+				);
+				if (!seriesValid) {
+					return res.status(422).json('Unsupported Series.');
+				}
+				const connSupportedYears = await connectMongoDb('Series_Data');
+				const document_list_years: SeriesDataDocModel[] =
+					await connSupportedYears.models.Series_Data_Doc.find({
+						series: seriesValid,
+					})
+						.sort({ year: -1 })
+						.exec();
+				const seriesDataValid = document_list_years.find(
+					(doc) =>
+						doc.series.toLowerCase() === seriesValid.toLowerCase() &&
+						parseInt(doc.year) === parseInt(year)
+				);
+				if (!seriesDataValid) {
+					return res.status(422).json('Unsupported Year.');
+				}
+				if (!seriesDataValid.documents_url) {
+					return res
+						.status(422)
+						.json(
+							'Missing FIA page URL. Unsupported Series, Year or Database error.'
+						);
+				}
+				if (!seriesDataValid.documents_url.includes(fiaDomain)) {
+					return res
+						.status(422)
+						.json(
+							'URL does not seem to point to https://www.fia.com domain. Aborting.'
+						);
+				}
+				const seriesYearDB = `${
+					seriesDataValid.year
+				}_${seriesDataValid.series.toUpperCase()}_WC_Docs`;
+				const job = await workQueue.add('update-all', {
+					series: seriesDataValid.series,
+					year: seriesDataValid.year,
+					seriesYearDB: seriesYearDB,
+					seriesYearPageURL: seriesDataValid.documents_url,
 				});
 				return res.status(202).json({ id: job.id });
 			} else {
 				return res.status(401).end();
 			}
 		} catch (error: any) {
-			console.log(error);
 			return res.status(500).end();
 		}
 	}
 );
 
 router.get(
-	'/update-all/penalties/:series/:year?',
+	'/update-all/penalties/:series/:year',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
@@ -80,23 +115,57 @@ router.get(
 			}
 			const { authorization } = req.headers;
 			if (authorization === `Bearer ${CRON_JOB_UPDATE_ALL_SECRET}`) {
-				const series = supportedSeries.find(
-					(s) => s === req.params.series.toLowerCase()
-				);
+				const series: string = req.params.series;
+				const year: string = req.params.year;
 				if (!series) {
-					return res.status(422).json('Unsupported series.');
+					return res.status(422).json('Must provide a Series.');
 				}
-				const year = req.params.year || new Date().getFullYear().toString();
-				const seriesYearDB = dbNameList[`${series}_${year}_db`];
-				const seriesYearPageURL = fiaPageList[`${series}_${year}_page`];
-				if (!seriesYearDB || !seriesYearPageURL) {
-					return res.status(422).json('Unsupported year.');
+				if (!year) {
+					return res.status(422).json('Must provide a Year.');
 				}
+				const seriesValid = supportedSeries.find(
+					(s) => s.toLowerCase() === series.toLowerCase()
+				);
+				if (!seriesValid) {
+					return res.status(422).json('Unsupported Series.');
+				}
+				const connSupportedYears = await connectMongoDb('Series_Data');
+				const document_list_years: SeriesDataDocModel[] =
+					await connSupportedYears.models.Series_Data_Doc.find({
+						series: seriesValid,
+					})
+						.sort({ year: -1 })
+						.exec();
+				const seriesDataValid = document_list_years.find(
+					(doc) =>
+						doc.series.toLowerCase() === seriesValid.toLowerCase() &&
+						parseInt(doc.year) === parseInt(year)
+				);
+				if (!seriesDataValid) {
+					return res.status(422).json('Unsupported Year.');
+				}
+				if (!seriesDataValid.documents_url) {
+					return res
+						.status(422)
+						.json(
+							'Missing FIA page URL. Unsupported Series, Year or Database error.'
+						);
+				}
+				if (!seriesDataValid.documents_url.includes(fiaDomain)) {
+					return res
+						.status(422)
+						.json(
+							'URL does not seem to point to https://www.fia.com domain. Aborting.'
+						);
+				}
+				const seriesYearDB = `${
+					seriesDataValid.year
+				}_${seriesDataValid.series.toUpperCase()}_WC_Docs`;
 				const job = await workQueue.add('update-all', {
-					series,
-					year,
-					seriesYearDB,
-					seriesYearPageURL,
+					series: seriesDataValid.series,
+					year: seriesDataValid.year,
+					seriesYearDB: seriesYearDB,
+					seriesYearPageURL: seriesDataValid.documents_url,
 				});
 				return res.status(202).json({ id: job.id });
 			} else {
