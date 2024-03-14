@@ -36,8 +36,10 @@ function start() {
 	// Updating with newest documents for the specified year.
 	workQueue.process('update-newest', maxJobsPerWorker, async (job) => {
 		try {
-			const conn = await connectMongoDb(job.data.seriesYearDB);
-			const docList = await conn.models.Penalty_Doc.find()
+			const connectionSeriesYearDb = await connectMongoDb(
+				job.data.seriesYearDB
+			);
+			const docList = await connectionSeriesYearDb.models.Penalty_Doc.find()
 				.sort({ doc_date: -1 })
 				.limit(1)
 				.exec();
@@ -141,22 +143,23 @@ function start() {
 										readPDF as any,
 										job.data.series as 'f1' | 'f2' | 'f3'
 									);
-									const docExists = await conn.models.Penalty_Doc.findOne({
-										series: transformed.series,
-										doc_type: transformed.doc_type,
-										doc_name: transformed.doc_name,
-										doc_date: transformed.doc_date,
-										penalty_type: transformed.penalty_type,
-										grand_prix: transformed.grand_prix,
-										weekend: transformed.weekend,
-										incident_title: transformed.incident_title,
-									});
+									const docExists =
+										await connectionSeriesYearDb.models.Penalty_Doc.findOne({
+											series: transformed.series,
+											doc_type: transformed.doc_type,
+											doc_name: transformed.doc_name,
+											doc_date: transformed.doc_date,
+											penalty_type: transformed.penalty_type,
+											grand_prix: transformed.grand_prix,
+											weekend: transformed.weekend,
+											incident_title: transformed.incident_title,
+										});
 									if (docExists) {
 										console.log('Document already exists. Skipping.');
 										resolve(null);
 										return;
 									}
-									await conn.models.Penalty_Doc.create({
+									await connectionSeriesYearDb.models.Penalty_Doc.create({
 										...transformed,
 										manual_upload: false,
 									});
@@ -229,7 +232,9 @@ function start() {
 				};
 			}
 			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
-			const conn = await connectMongoDb(job.data.seriesYearDB);
+			const connectionSeriesYearDb = await connectMongoDb(
+				job.data.seriesYearDB
+			);
 			const results = await Promise.allSettled(
 				allDocsHref.map(
 					(href, i) =>
@@ -247,22 +252,23 @@ function start() {
 										readPDF as any,
 										job.data.series as 'f1' | 'f2' | 'f3'
 									);
-									const docExists = await conn.models.Penalty_Doc.findOne({
-										series: transformed.series,
-										doc_type: transformed.doc_type,
-										doc_name: transformed.doc_name,
-										doc_date: transformed.doc_date,
-										penalty_type: transformed.penalty_type,
-										grand_prix: transformed.grand_prix,
-										weekend: transformed.weekend,
-										incident_title: transformed.incident_title,
-									});
+									const docExists =
+										await connectionSeriesYearDb.models.Penalty_Doc.findOne({
+											series: transformed.series,
+											doc_type: transformed.doc_type,
+											doc_name: transformed.doc_name,
+											doc_date: transformed.doc_date,
+											penalty_type: transformed.penalty_type,
+											grand_prix: transformed.grand_prix,
+											weekend: transformed.weekend,
+											incident_title: transformed.incident_title,
+										});
 									if (docExists) {
 										console.log('Document already exists. Skipping.');
 										resolve();
 										return;
 									}
-									await conn.models.Penalty_Doc.create({
+									await connectionSeriesYearDb.models.Penalty_Doc.create({
 										...transformed,
 										manual_upload: false,
 									});

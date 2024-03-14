@@ -52,43 +52,43 @@ router.get(
 				if (!seriesValid) {
 					return res.status(422).json('Unsupported Series.');
 				}
-				const connSupportedYears = await connectMongoDb('Series_Data');
-				const document_list_years: SeriesDataDocModel[] =
-					await connSupportedYears.models.Series_Data_Doc.find({
+				const connectionSeriesDataDb = await connectMongoDb('Series_Data');
+				const document_list_series_data: SeriesDataDocModel[] =
+					await connectionSeriesDataDb.models.Series_Data_Doc.find({
 						series: seriesValid,
 					})
 						.sort({ year: -1 })
 						.exec();
-				const seriesDataValid = document_list_years.find(
+				const dataExists = document_list_series_data.find(
 					(doc) =>
 						doc.series.toLowerCase() === seriesValid.toLowerCase() &&
 						parseInt(doc.year) === parseInt(year)
 				);
-				if (!seriesDataValid) {
+				if (!dataExists) {
 					return res.status(422).json('Unsupported Year.');
 				}
-				if (!seriesDataValid.documents_url) {
+				if (!dataExists.documents_url) {
 					return res
 						.status(422)
 						.json(
 							'Missing FIA page URL. Unsupported Series, Year or Database error.'
 						);
 				}
-				if (!seriesDataValid.documents_url.includes(fiaDomain)) {
+				if (!dataExists.documents_url.includes(fiaDomain)) {
 					return res
 						.status(422)
 						.json(
 							'URL does not seem to point to https://www.fia.com domain. Aborting.'
 						);
 				}
-				const seriesYearDB = `${
-					seriesDataValid.year
-				}_${seriesDataValid.series.toUpperCase()}_WC_Docs`;
+				const seriesYearDb = `${
+					dataExists.year
+				}_${dataExists.series.toUpperCase()}_WC_Docs`;
 				const job = await workQueue.add('update-all', {
-					series: seriesDataValid.series,
-					year: seriesDataValid.year,
-					seriesYearDB: seriesYearDB,
-					seriesYearPageURL: seriesDataValid.documents_url,
+					series: dataExists.series,
+					year: dataExists.year,
+					seriesYearDb: seriesYearDb,
+					seriesYearPageURL: dataExists.documents_url,
 				});
 				return res.status(202).json({ id: job.id });
 			} else {
@@ -129,43 +129,43 @@ router.get(
 				if (!seriesValid) {
 					return res.status(422).json('Unsupported Series.');
 				}
-				const connSupportedYears = await connectMongoDb('Series_Data');
-				const document_list_years: SeriesDataDocModel[] =
-					await connSupportedYears.models.Series_Data_Doc.find({
+				const connectionSeriesDataDb = await connectMongoDb('Series_Data');
+				const document_list_series_data: SeriesDataDocModel[] =
+					await connectionSeriesDataDb.models.Series_Data_Doc.find({
 						series: seriesValid,
 					})
 						.sort({ year: -1 })
 						.exec();
-				const seriesDataValid = document_list_years.find(
+				const dataExists = document_list_series_data.find(
 					(doc) =>
 						doc.series.toLowerCase() === seriesValid.toLowerCase() &&
 						parseInt(doc.year) === parseInt(year)
 				);
-				if (!seriesDataValid) {
+				if (!dataExists) {
 					return res.status(422).json('Unsupported Year.');
 				}
-				if (!seriesDataValid.documents_url) {
+				if (!dataExists.documents_url) {
 					return res
 						.status(422)
 						.json(
 							'Missing FIA page URL. Unsupported Series, Year or Database error.'
 						);
 				}
-				if (!seriesDataValid.documents_url.includes(fiaDomain)) {
+				if (!dataExists.documents_url.includes(fiaDomain)) {
 					return res
 						.status(422)
 						.json(
 							'URL does not seem to point to https://www.fia.com domain. Aborting.'
 						);
 				}
-				const seriesYearDB = `${
-					seriesDataValid.year
-				}_${seriesDataValid.series.toUpperCase()}_WC_Docs`;
+				const seriesYearDb = `${
+					dataExists.year
+				}_${dataExists.series.toUpperCase()}_WC_Docs`;
 				const job = await workQueue.add('update-all', {
-					series: seriesDataValid.series,
-					year: seriesDataValid.year,
-					seriesYearDB: seriesYearDB,
-					seriesYearPageURL: seriesDataValid.documents_url,
+					series: dataExists.series,
+					year: dataExists.year,
+					seriesYearDb: seriesYearDb,
+					seriesYearPageURL: dataExists.documents_url,
 				});
 				return res.status(202).json({ id: job.id });
 			} else {
