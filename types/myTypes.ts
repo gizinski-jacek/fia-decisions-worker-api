@@ -39,12 +39,13 @@ export interface PenaltyModel extends TransformedPDFData {
 	updatedAt: string;
 }
 
-export interface DatabaseNameList {
-	[key: string]: string;
-}
-
-export interface FiaPageList {
-	[key: string]: string;
+export interface SeriesDataDocModel {
+	_id: string;
+	series: string;
+	year: string;
+	documents_url: string;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface WeekendData {
