@@ -1,4 +1,4 @@
-import connectMongo from './mongo/mongo';
+import connectMongoDb from './mongo/mongo';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { readPDFPages } from './utils/pdfReader';
@@ -36,7 +36,7 @@ function start() {
 	// Updating with newest documents for the specified year.
 	workQueue.process('update-newest', maxJobsPerWorker, async (job) => {
 		try {
-			const conn = await connectMongo(job.data.seriesYearDB);
+			const conn = await connectMongoDb(job.data.seriesYearDB);
 			const docList = await conn.models.Penalty_Doc.find()
 				.sort({ doc_date: -1 })
 				.limit(1)
@@ -229,7 +229,7 @@ function start() {
 				};
 			}
 			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
-			const conn = await connectMongo(job.data.seriesYearDB);
+			const conn = await connectMongoDb(job.data.seriesYearDB);
 			const results = await Promise.allSettled(
 				allDocsHref.map(
 					(href, i) =>
