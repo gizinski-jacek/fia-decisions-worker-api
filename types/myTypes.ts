@@ -39,11 +39,15 @@ export interface PenaltyModel extends TransformedPDFData {
 	updatedAt: string;
 }
 
-export interface SeriesDataDocModel {
-	_id: string;
+export interface SeriesData {
 	series: string;
-	year: string;
+	year: number;
 	documents_url: string;
+}
+
+export interface SeriesDataDocModel extends SeriesData {
+	_id: string;
+	manual_upload: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
