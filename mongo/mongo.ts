@@ -32,17 +32,7 @@ const connectMongoDb = async (dbName: string) => {
 				MONGODB_URI + dbName + '?retryWrites=true&w=majority',
 				opts
 			);
-			if (dbName === 'Other_Docs') {
-				if (!client.models.Missing_Doc) {
-					client.model('Missing_Doc', require('../models/missingDoc'));
-				}
-				if (!client.models.Contact_Doc) {
-					client.model('Contact_Doc', require('../models/contactDoc'));
-				}
-				if (!client.models.Penalty_Doc) {
-					client.model('Penalty_Doc', require('../models/penaltyDoc'));
-				}
-			} else if (dbName === 'Series_Data') {
+			if (dbName === 'Series_Data') {
 				if (!client.models.Series_Data_Doc) {
 					client.model('Series_Data_Doc', require('../models/seriesDataDoc'));
 				}
@@ -63,17 +53,7 @@ const connectMongoDb = async (dbName: string) => {
 				MONGODB_URI + dbName + '?retryWrites=true&w=majority',
 				opts
 			);
-			if (dbName === 'Other_Docs') {
-				if (!connection.models.Missing_Doc) {
-					connection.model('Missing_Doc', require('../models/missingDoc'));
-				}
-				if (!connection.models.Contact_Doc) {
-					connection.model('Contact_Doc', require('../models/contactDoc'));
-				}
-				if (!connection.models.Penalty_Doc) {
-					connection.model('Penalty_Doc', require('../models/penaltyDoc'));
-				}
-			} else if (dbName === 'Series_Data') {
+			if (dbName === 'Series_Data') {
 				if (!connection.models.Series_Data_Doc) {
 					connection.model(
 						'Series_Data_Doc',
