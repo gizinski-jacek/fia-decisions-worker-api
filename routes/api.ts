@@ -71,7 +71,7 @@ router.get(
 					return res
 						.status(422)
 						.json(
-							'Missing FIA page URL. Unsupported Series, Year or Database error.'
+							'Missing FIA website URL. Unsupported Series, Year or Database error.'
 						);
 				}
 				if (!dataExists.documents_url.includes(fiaDomain)) {
@@ -148,7 +148,7 @@ router.get(
 					return res
 						.status(422)
 						.json(
-							'Missing FIA page URL. Unsupported Series, Year or Database error.'
+							'Missing FIA website URL. Unsupported Series, Year or Database error.'
 						);
 				}
 				if (!dataExists.documents_url.includes(fiaDomain)) {
