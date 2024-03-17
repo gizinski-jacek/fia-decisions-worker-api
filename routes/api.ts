@@ -24,20 +24,20 @@ router.get('/', (req: any, res: any, next: any) => {
 });
 
 router.get(
-	'/update-newest/penalties/:series/:year',
+	'/update-penalties-newest/penalties/:series/:year',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
 		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
 		try {
-			const { CRON_JOB_UPDATE_NEWEST_SECRET } = process.env;
-			if (!CRON_JOB_UPDATE_NEWEST_SECRET) {
+			const { UPDATE_PENALTIES_NEWEST_SECRET } = process.env;
+			if (!UPDATE_PENALTIES_NEWEST_SECRET) {
 				throw new Error(
-					'Please define CRON_JOB_UPDATE_NEWEST_SECRET environment variable inside .env.local'
+					'Please define UPDATE_PENALTIES_NEWEST_SECRET environment variable inside .env.local'
 				);
 			}
 			const { authorization } = req.headers;
-			if (authorization === `Bearer ${CRON_JOB_UPDATE_NEWEST_SECRET}`) {
+			if (authorization === `Bearer ${UPDATE_PENALTIES_NEWEST_SECRET}`) {
 				const series: string = req.params.series;
 				const year: string = req.params.year;
 				if (!series) {
@@ -62,7 +62,7 @@ router.get(
 				const dataExists = document_list_series_data.find(
 					(doc) =>
 						doc.series.toLowerCase() === seriesValid.toLowerCase() &&
-						parseInt(doc.year) === parseInt(year)
+						doc.year === parseInt(year)
 				);
 				if (!dataExists) {
 					return res.status(422).json('Unsupported Year.');
@@ -84,7 +84,7 @@ router.get(
 				const seriesYearDb = `${
 					dataExists.year
 				}_${dataExists.series.toUpperCase()}_WC_Docs`;
-				const job = await workQueue.add('update-all', {
+				const job = await workQueue.add('update-penalties-all', {
 					series: dataExists.series,
 					year: dataExists.year,
 					seriesYearDb: seriesYearDb,
@@ -101,20 +101,20 @@ router.get(
 );
 
 router.get(
-	'/update-all/penalties/:series/:year',
+	'/update-penalties-all/penalties/:series/:year',
 	async function (req: any, res: any, next: any) {
 		// This would be where you could pass arguments to the job
 		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
 		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
 		try {
-			const { CRON_JOB_UPDATE_ALL_SECRET } = process.env;
-			if (!CRON_JOB_UPDATE_ALL_SECRET) {
+			const { UPDATE_PENALTIES_ALL_SECRET } = process.env;
+			if (!UPDATE_PENALTIES_ALL_SECRET) {
 				throw new Error(
-					'Please define CRON_JOB_UPDATE_ALL_SECRET environment variable inside .env.local'
+					'Please define UPDATE_PENALTIES_ALL_SECRET environment variable inside .env.local'
 				);
 			}
 			const { authorization } = req.headers;
-			if (authorization === `Bearer ${CRON_JOB_UPDATE_ALL_SECRET}`) {
+			if (authorization === `Bearer ${UPDATE_PENALTIES_ALL_SECRET}`) {
 				const series: string = req.params.series;
 				const year: string = req.params.year;
 				if (!series) {
@@ -139,7 +139,7 @@ router.get(
 				const dataExists = document_list_series_data.find(
 					(doc) =>
 						doc.series.toLowerCase() === seriesValid.toLowerCase() &&
-						parseInt(doc.year) === parseInt(year)
+						doc.year === parseInt(year)
 				);
 				if (!dataExists) {
 					return res.status(422).json('Unsupported Year.');
@@ -161,7 +161,7 @@ router.get(
 				const seriesYearDb = `${
 					dataExists.year
 				}_${dataExists.series.toUpperCase()}_WC_Docs`;
-				const job = await workQueue.add('update-all', {
+				const job = await workQueue.add('update-penalties-all', {
 					series: dataExists.series,
 					year: dataExists.year,
 					seriesYearDb: seriesYearDb,
@@ -173,6 +173,32 @@ router.get(
 			}
 		} catch (error: any) {
 			console.log(error);
+			return res.status(500).end();
+		}
+	}
+);
+
+router.get(
+	'/update-series-data',
+	async function (req: any, res: any, next: any) {
+		// This would be where you could pass arguments to the job
+		// Ex: workQueue.add({ url: 'https://www.heroku.com' })
+		// Docs: https://github.com/OptimalBits/bull/blob/develop/REFERENCE.md#queueadd
+		try {
+			const { AUTO_UPDATE_SERIES_DATA_SECRET } = process.env;
+			if (!AUTO_UPDATE_SERIES_DATA_SECRET) {
+				throw new Error(
+					'Please define AUTO_UPDATE_SERIES_DATA_SECRET environment variable inside .env.local'
+				);
+			}
+			const { authorization } = req.headers;
+			if (authorization === `Bearer ${AUTO_UPDATE_SERIES_DATA_SECRET}`) {
+				const job = await workQueue.add('update-series-data');
+				return res.status(202).json({ id: job.id });
+			} else {
+				return res.status(401).end();
+			}
+		} catch (error: any) {
 			return res.status(500).end();
 		}
 	}
