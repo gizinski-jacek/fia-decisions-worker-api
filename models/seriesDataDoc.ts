@@ -22,6 +22,7 @@ const Series_Data_Doc = new Schema<
 			maxlength: 512,
 			required: true,
 		},
+		manual_upload: { type: Boolean, required: true },
 	},
 	{ timestamps: true }
 );
