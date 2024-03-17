@@ -9,5 +9,5 @@ jobs:
       - name: Call F1 API route fetching new documents
         run: |
           curl --request GET \
-          --url '${{ secrets.UPDATE_F1_ENDPOINT }}' \
+          --url '${{ secrets.CRON_JOB_UPDATE_F1_ENDPOINT }}' \
           --header 'Authorization: Bearer ${{ secrets.CRON_JOB_SECRET }}'
