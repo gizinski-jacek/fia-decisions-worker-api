@@ -45,7 +45,7 @@ function start() {
 		async (job) => {
 			try {
 				const connectionSeriesYearDb = await connectMongoDb(
-					job.data.seriesYearDB
+					job.data.seriesYearDb
 				);
 				const docList = await connectionSeriesYearDb.models.Penalty_Doc.find()
 					.sort({ doc_date: -1 })
@@ -56,7 +56,7 @@ function start() {
 					const delegate = await workQueue.add('update-penalties-all', {
 						series: job.data.series,
 						year: job.data.year,
-						seriesYearDB: job.data.seriesYearDB,
+						seriesYearDb: job.data.seriesYearDb,
 						seriesYearPageURL: job.data.seriesYearPageURL,
 					});
 					return {
@@ -241,7 +241,7 @@ function start() {
 			}
 			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
 			const connectionSeriesYearDb = await connectMongoDb(
-				job.data.seriesYearDB
+				job.data.seriesYearDb
 			);
 			const results = await Promise.allSettled(
 				allDocsHref.map(
