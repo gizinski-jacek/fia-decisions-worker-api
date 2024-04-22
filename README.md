@@ -68,6 +68,7 @@ UPDATE_PENALTIES_ALL_SECRET
 - API endpoints for:
   - Creating worker jobs to update newest documents for specific series and year
   - Creating worker jobs to update all documents for specific series and year
+  - Creating worker jobs to update supported series data (FIA documents page URL)
 
 ## Status
 
