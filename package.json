@@ -20,7 +20,7 @@
 		"jsdom": "^20.0.1",
 		"mongoose": "^6.6.5",
 		"morgan": "~1.9.1",
-		"pdfreader": "^2.0.0",
+		"pdfreader": "^3.0.2",
 		"redis": "^4.3.1",
 		"redis-server": "^1.2.2",
 		"throng": "^5.0.0",
