@@ -4,6 +4,15 @@ import {
 	TransformedPDFData,
 } from '../types/myTypes';
 
+// PDF is interested in the visual representation of a page, not necessarily in what the page "means". By itself doesn't even have a concept for a
+// "word", let alone "lines" or "paragraphs". To complicate things even more, the way text is drawn on the page( and thus the order in which it
+// appears in the PDF file itself) doesn't even have to be the proper reading order (or what us humans would consider to be proper reading order).
+// Actually, it doesn't even need information about the text itself and there are plenty of PDF files where you can't even copy and paste the text
+// without ending up with gibberish.
+// There is essentially no easy cut-and-paste solution so if you want to be able to extract formatted text, you have to look at all of the pieces of
+// text on the page, identify headers and paragraphs by looking at their properties (fonts used, size relative to the other text on the page, etc...)
+// and positioning of text fragments, white space on the page, closeness of certain letters, words and lines and you have to piece them back together.
+
 const getCleanFilename = (string: string): string => {
 	let filename = string;
 	// Checking if string value comes from file name or from anchors href.
@@ -340,7 +349,6 @@ const formatIncidentDetails = (
 
 	// Transforming incident details strings into key-value pairs.
 	for (let i = 0; i < splitData.length; i += 2) {
-		// Reminder to fix type error here
 		const key = splitData[i];
 		const value = splitData[i + 1] || '';
 		// TS check disabled for next line until I find a way to reconcile the
