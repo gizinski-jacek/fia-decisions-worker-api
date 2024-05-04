@@ -84,14 +84,11 @@ const checkForRequiredFields = (data: string[]): void => {
 
 // Checking if document file name is titled Offence, Decision or Infringement.
 const getDocumentType = (filename: string, gpName: string): string => {
-	const str = filename.replace(gpName, '').toLowerCase().trim().slice(0, 12);
-	return str.includes('offence')
-		? 'offence'
-		: str.includes('decision')
-		? 'decision'
-		: str.includes('infringement')
-		? 'infringement'
-		: 'wrong doc type';
+	const str = filename
+		.replace(gpName, '')
+		.toLowerCase()
+		.match(/(offence|decision|infringement)/im);
+	return str ? str[0] : 'wrong doc type';
 };
 
 const getIncidentTitle = (filename: string, gpname: string): string => {
