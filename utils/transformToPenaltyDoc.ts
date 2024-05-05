@@ -404,14 +404,17 @@ const formatDate = (data: DocumentDetails): string => {
 	// year, month, day, hour and minute, joining them into string
 	// which will be a valid Date format if used to create new Date object.
 	const dateString = data.Date + ' ' + data.Time;
-	const date = new Date(dateString);
-	const day = date.toLocaleString([], { day: '2-digit' });
-	const month = date.toLocaleString([], { month: '2-digit' });
-	const year = date.toLocaleString([], { year: 'numeric' });
-	// Forcing 24 hour format.
-	const hour = date.toLocaleString('en-GB', { hour: '2-digit' });
-	const minute = date.toLocaleString([], { minute: '2-digit' });
-	return year + '/' + month + '/' + day + ' ' + hour + ':' + minute;
+	const fullDate = new Date(dateString).toLocaleString('en-GB', {
+		hour12: false,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+	});
+	const [date, time] = fullDate.split(', ');
+	const [day, month, year] = date.split('/');
+	return year + '/' + month + '/' + day + ' ' + time;
 };
 
 export const createPenaltyDocument = (
