@@ -133,7 +133,9 @@ function start() {
 						year: job.data.year,
 					};
 				}
-				console.log(`Total number of new documents: ${allDocsHref.length}.`);
+				console.log(
+					`Total number of new ${job.data.series} ${job.data.year} documents: ${allDocsHref.length}.`
+				);
 				const results = await Promise.allSettled(
 					allDocsHref.map(
 						(href, i) =>
@@ -239,7 +241,9 @@ function start() {
 					year: job.data.year,
 				};
 			}
-			console.log(`Total number of scraped documents: ${allDocsHref.length}.`);
+			console.log(
+				`Total number of scraped ${job.data.series} ${job.data.year} documents: ${allDocsHref.length}.`
+			);
 			const connectionSeriesYearDb = await connectMongoDb(
 				job.data.seriesYearDb
 			);
@@ -347,7 +351,7 @@ function start() {
 				return { status: 'No valid series data documents found.' };
 			}
 			console.log(
-				`Total number of scraped documents: ${allSeriesDataObj.length}.`
+				`Total number of scraped series data documents: ${allSeriesDataObj.length}.`
 			);
 			const connectionSeriesDataDb = await connectMongoDb('Series_Data');
 			const results = await Promise.allSettled(
