@@ -344,8 +344,8 @@ function start() {
 				return seriesDataObj;
 			};
 			const allSeriesDataObj = [];
-			for (let [key, value] of Object.entries(seriesDocumentsPage)) {
-				allSeriesDataObj.push(...(await getYears(key, value)));
+			for (let [series, url] of Object.entries(seriesDocumentsPage)) {
+				allSeriesDataObj.push(...(await getYears(series, url)));
 			}
 			if (allSeriesDataObj.length === 0) {
 				return { status: 'No valid series data documents found.' };
@@ -373,11 +373,10 @@ function start() {
 										resolve();
 										return;
 									}
-									const test =
-										await connectionSeriesDataDb.models.Series_Data_Doc.create({
-											...doc,
-											manual_upload: false,
-										});
+									await connectionSeriesDataDb.models.Series_Data_Doc.create({
+										...doc,
+										manual_upload: false,
+									});
 									resolve();
 								} catch (error: any) {
 									console.log(error);

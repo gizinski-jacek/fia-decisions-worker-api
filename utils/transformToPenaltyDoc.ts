@@ -346,6 +346,7 @@ const formatIncidentDetails = (
 
 	// Transforming incident details strings into key-value pairs.
 	for (let i = 0; i < splitData.length; i += 2) {
+		// TODO: Reminder to fix type error here !!!
 		const key = splitData[i];
 		const value = splitData[i + 1] || '';
 		// TS check disabled for next line until I find a way to reconcile the
