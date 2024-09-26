@@ -1,10 +1,10 @@
-# Track Limits - FIA Formula penalties (background worker API)
+# Track Limits - FIA Formula penalties (worker API)
 
 Express API handling long-running background tasks to complement [FIA decisions](https://github.com/gizinski-jacek/fia-decisions) app.
 
 ## Table of contents
 
-- [Track Limits - FIA Formula penalties (background worker API)](#track-limits---fia-formula-penalties-background-worker-api)
+- [Track Limits - FIA Formula penalties (worker API)](#track-limits---fia-formula-penalties-worker-api)
   - [Table of contents](#table-of-contents)
 - [Github \& Live](#github--live)
   - [Getting Started](#getting-started)
