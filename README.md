@@ -19,7 +19,7 @@ Github repo can be found [here](https://github.com/gizinski-jacek/fia-decisions-
 
 NextJS client can be found [here](https://github.com/gizinski-jacek/fia-decisions).
 
-~~Live demo can be found on [Heroku](https://fia-decisions-worker-api-22469.herokuapp.com).~~ \* _Temporarily unavailable_ \*
+~~Live demo can be found on [Heroku](https://fia-decisions-worker-api-22469.herokuapp.com).~~ _Temporarily unavailable_
 
 ## Getting Started
 
