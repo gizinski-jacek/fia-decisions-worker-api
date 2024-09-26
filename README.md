@@ -1,10 +1,10 @@
-# Track Limits - FIA Formula penalties background worker API
+# Track Limits - FIA Formula penalties (background worker API)
 
-Express server handling long-running background tasks to complement [FIA decisions](https://github.com/gizinski-jacek/fia-decisions) app.
+Express API handling long-running background tasks to complement [FIA decisions](https://github.com/gizinski-jacek/fia-decisions) app.
 
 ## Table of contents
 
-- [Track Limits - FIA Formula penalties background worker API](#track-limits---fia-formula-penalties-background-worker-api)
+- [Track Limits - FIA Formula penalties (background worker API)](#track-limits---fia-formula-penalties-background-worker-api)
   - [Table of contents](#table-of-contents)
 - [Github \& Live](#github--live)
   - [Getting Started](#getting-started)
@@ -19,7 +19,7 @@ Github repo can be found [here](https://github.com/gizinski-jacek/fia-decisions-
 
 NextJS client can be found [here](https://github.com/gizinski-jacek/fia-decisions).
 
-Live demo can be found on [Heroku](https://fia-decisions-worker-api-22469.herokuapp.com).
+~~Live demo can be found on [Heroku](https://fia-decisions-worker-api-22469.herokuapp.com).~~ \* _Temporarily unavailable_ \*
 
 ## Getting Started
 
