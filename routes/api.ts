@@ -84,7 +84,7 @@ router.get(
 				const seriesYearDb = `${
 					dataExists.year
 				}_${dataExists.series.toUpperCase()}_WC_Docs`;
-				const job = await workQueue.add('update-penalties-all', {
+				const job = await workQueue.add('update-penalties-newest', {
 					series: dataExists.series,
 					year: dataExists.year,
 					seriesYearDb: seriesYearDb,
