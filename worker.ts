@@ -82,50 +82,50 @@ function start() {
 				if (!mainDoc) {
 					throw new Error('Error getting list of penalties.');
 				}
-				const allDocAnchors: NodeList = mainDoc.querySelectorAll('a');
-				const allDocsHref: string[] = [];
-				allDocAnchors.forEach((link: any) => {
-					const fileName = link.href
-						.slice(link.href.lastIndexOf('/') + 1)
-						.trim()
-						.toLowerCase();
-					const disallowedDoc = disallowedWordsInDocName.some((str) =>
-						fileName.toLowerCase().includes(str)
-					);
-					if (
-						!disallowedDoc &&
-						((fileName.includes('decision') && fileName.includes('car')) ||
-							(fileName.includes('offence') && fileName.includes('car')) ||
-							(fileName.includes('infringment') && fileName.includes('car')) ||
-							(fileName.includes('infringement') && fileName.includes('car')))
-					) {
-						const published = link.querySelector(
-							'.date-display-single'
-						)?.textContent;
-						if (!published) {
-							allDocsHref.push(link.href);
-							return;
-						}
-						const dateAndTime = published.split(' ');
-						const dateStrings = dateAndTime[0].split('.');
-						const reformattedDate =
-							'20' +
-							dateStrings[2] +
-							'/' +
-							dateStrings[1] +
-							'/' +
-							dateStrings[0] +
-							' ' +
-							dateAndTime[1];
+				const allDocAnchors: HTMLAnchorElement[] = Array.from(
+					mainDoc.querySelectorAll('a')
+				);
+				const allDocsHref: string[] = allDocAnchors
+					.map((link: HTMLAnchorElement) => {
+						const fileName = link.href
+							.slice(link.href.lastIndexOf('/') + 1)
+							.trim()
+							.toLowerCase();
+						const disallowedDoc = disallowedWordsInDocName.some((str) =>
+							fileName.toLowerCase().includes(str)
+						);
 						if (
-							new Date(reformattedDate).getTime() + 24 * 60 * 60 * 1000 >=
-							new Date(docList[0].doc_date).getTime()
+							!disallowedDoc &&
+							fileName.includes('car') &&
+							(fileName.includes('decision') ||
+								fileName.includes('offence') ||
+								fileName.includes('infringment') ||
+								fileName.includes('infringement'))
 						) {
-							allDocsHref.push(link.href);
-							return;
+							const published = link.querySelector(
+								'.date-display-single'
+							)?.textContent;
+							if (!published) return;
+							const dateAndTime = published.split(' ');
+							const dateStrings = dateAndTime[0].split('.');
+							const reformattedDate =
+								'20' +
+								dateStrings[2] +
+								'/' +
+								dateStrings[1] +
+								'/' +
+								dateStrings[0] +
+								' ' +
+								dateAndTime[1];
+							if (
+								new Date(reformattedDate).getTime() + 24 * 60 * 60 * 1000 >=
+								new Date(docList[0].doc_date).getTime()
+							) {
+								return link.href;
+							}
 						}
-					}
-				});
+					})
+					.filter((v) => v !== undefined) as string[];
 				if (allDocsHref.length === 0) {
 					return {
 						status: 'Documents are up to date.',
@@ -175,6 +175,8 @@ function start() {
 										});
 										resolve(null);
 									} catch (error: any) {
+										console.log(error);
+										console.log('Errored file URL: ' + fiaDomain + href);
 										reject(error);
 									}
 								}, 2000 * i)
@@ -214,26 +216,30 @@ function start() {
 			if (!mainDoc) {
 				throw new Error('Error getting list of penalties.');
 			}
-			const allDocAnchors: NodeList = mainDoc.querySelectorAll('a');
-			const allDocsHref: string[] = [];
-			allDocAnchors.forEach((link: any) => {
-				const fileName = link.href
-					.slice(link.href.lastIndexOf('/') + 1)
-					.trim()
-					.toLowerCase();
-				const disallowedDoc = disallowedWordsInDocName.some((str) =>
-					fileName.toLowerCase().includes(str)
-				);
-				if (
-					!disallowedDoc &&
-					((fileName.includes('decision') && fileName.includes('car')) ||
-						(fileName.includes('offence') && fileName.includes('car')) ||
-						(fileName.includes('infringment') && fileName.includes('car')) ||
-						(fileName.includes('infringement') && fileName.includes('car')))
-				) {
-					allDocsHref.push(link.href);
-				}
-			});
+			const allDocAnchors: HTMLAnchorElement[] = Array.from(
+				mainDoc.querySelectorAll('a')
+			);
+			const allDocsHref: string[] = allDocAnchors
+				.map((link: HTMLAnchorElement) => {
+					const fileName = link.href
+						.slice(link.href.lastIndexOf('/') + 1)
+						.trim()
+						.toLowerCase();
+					const disallowedDoc = disallowedWordsInDocName.some((str) =>
+						fileName.toLowerCase().includes(str)
+					);
+					if (
+						!disallowedDoc &&
+						fileName.includes('car') &&
+						(fileName.includes('decision') ||
+							fileName.includes('offence') ||
+							fileName.includes('infringment') ||
+							fileName.includes('infringement'))
+					) {
+						return link.href;
+					}
+				})
+				.filter((v) => v !== undefined) as string[];
 			if (allDocsHref.length === 0) {
 				return {
 					status: 'No valid documents found.',
@@ -242,7 +248,7 @@ function start() {
 				};
 			}
 			console.log(
-				`Total number of scraped ${job.data.series} ${job.data.year} documents: ${allDocsHref.length}.`
+				`Total number of all scraped ${job.data.series} ${job.data.year} documents: ${allDocsHref.length}.`
 			);
 			const connectionSeriesYearDb = await connectMongoDb(
 				job.data.seriesYearDb
@@ -287,6 +293,7 @@ function start() {
 									resolve();
 								} catch (error: any) {
 									console.log(error);
+									console.log('Errored file URL: ' + fiaDomain + href);
 									reject(error);
 								}
 							}, 2000 * i)
@@ -325,22 +332,24 @@ function start() {
 				if (!selectList) {
 					throw new Error('Error getting years select list.');
 				}
-				const allOptionsList: NodeList = selectList.querySelectorAll('option');
-				const seriesDataObj: SeriesData[] = [];
-				allOptionsList.forEach((option: any) => {
-					if (!option.value) return;
-					if (!option.value.includes('documents')) return;
-					const optionYear = option.value
-						.slice(option.value.lastIndexOf('/') + 1)
-						.trim()
-						.split('-')[1];
-					const doc = {
-						series: series,
-						year: parseInt(optionYear),
-						documents_url: fiaDomain + option.value,
-					};
-					seriesDataObj.push(doc);
-				});
+				const allOptionsList: HTMLOptionElement[] = Array.from(
+					selectList.querySelectorAll('option')
+				);
+				const seriesDataObj: SeriesData[] = allOptionsList
+					.map((option: HTMLOptionElement) => {
+						if (!option.value || !option.value.includes('documents')) return;
+						const optionYear = option.value
+							.slice(option.value.lastIndexOf('/') + 1)
+							.trim()
+							.split('-')[1];
+						const doc = {
+							series: series,
+							year: parseInt(optionYear),
+							documents_url: fiaDomain + option.value,
+						};
+						return doc;
+					})
+					.filter((v) => v !== undefined) as SeriesData[];
 				return seriesDataObj;
 			};
 			const allSeriesDataObj = [];
