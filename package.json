@@ -6,6 +6,7 @@
 		"start": "nf start"
 	},
 	"dependencies": {
+		"@types/node": "^22.7.4",
 		"axios": "^1.0.0",
 		"bull": "^4.10.0",
 		"compression": "^1.7.4",
@@ -27,7 +28,7 @@
 		"ts-node": "^10.9.1"
 	},
 	"devDependencies": {
-		"@types/express": "^4.17.14",
+		"@types/express": "^4.17.21",
 		"@types/jsdom": "^20.0.0",
 		"@types/throng": "^5.0.4",
 		"typescript": "4.8.2"
