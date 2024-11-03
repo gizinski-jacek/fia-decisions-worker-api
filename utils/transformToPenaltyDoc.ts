@@ -1,3 +1,4 @@
+import { fiaDomain } from '../myData/myData';
 import {
 	DocumentDetails,
 	IncidentDetails,
@@ -490,6 +491,7 @@ export const createPenaltyDocument = (
 			Reason: reasonContents,
 		},
 		stewards: stewards,
+		pdf_original_url: fiaDomain + href,
 	};
 	return document;
 };
