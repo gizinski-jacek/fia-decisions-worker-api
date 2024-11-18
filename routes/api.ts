@@ -11,7 +11,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 // Create / Connect to a named work queue
 const workQueue = new Queue('worker', REDIS_URL);
 
-// Handle GET for bulk document update requests.
+// Welcome response.
 router.get('/', (req: any, res: any, next: any) => {
 	return res.send(
 		`<main>
@@ -23,6 +23,7 @@ router.get('/', (req: any, res: any, next: any) => {
 	);
 });
 
+// Handle GET for bulk document update requests.
 router.get(
 	'/update-penalties-newest/penalties/:series/:year',
 	async function (req: any, res: any, next: any) {
