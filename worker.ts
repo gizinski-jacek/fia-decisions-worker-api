@@ -163,6 +163,7 @@ function start() {
 												grand_prix: transformed.grand_prix,
 												weekend: transformed.weekend,
 												incident_title: transformed.incident_title,
+												pdf_original_url: transformed.pdf_original_url,
 											});
 										if (docExists) {
 											console.log('Document already exists. Skipping.');
@@ -280,6 +281,7 @@ function start() {
 											grand_prix: transformed.grand_prix,
 											weekend: transformed.weekend,
 											incident_title: transformed.incident_title,
+											pdf_original_url: transformed.pdf_original_url,
 										});
 									if (docExists) {
 										console.log('Document already exists. Skipping.');
