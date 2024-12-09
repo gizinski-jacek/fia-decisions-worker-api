@@ -420,7 +420,7 @@ const formatDate = (data: DocumentDetails): string => {
 
 export const createPenaltyDocument = (
 	// Value from anchor href property to decompose into file name, doc type and grand prix name.
-	href: string,
+	originalHref: string,
 	// Array of strings parsed from FIA documents.
 	pdfDataArray: string[],
 	// Information to determine number of strings for stewards data,
@@ -435,7 +435,7 @@ export const createPenaltyDocument = (
 	// Check if file has correct format.
 	checkForRequiredFields(fixedPDfDataArray);
 
-	const filename = getCleanFilename(href);
+	const filename = getCleanFilename(originalHref);
 
 	// Extracting grand prix name.
 	const grandPrixName = filename.slice(0, filename.indexOf('-')).trim();
@@ -491,7 +491,7 @@ export const createPenaltyDocument = (
 			Reason: reasonContents,
 		},
 		stewards: stewards,
-		pdf_original_url: fiaDomain + href,
+		pdf_original_url: fiaDomain + originalHref,
 	};
 	return document;
 };
