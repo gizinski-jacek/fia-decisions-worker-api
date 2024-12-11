@@ -1,6 +1,6 @@
 import connectMongoDb from './mongo/mongo';
 import axios from 'axios';
-import { JSDOM } from 'jsdom';
+import puppeteer, { Browser, Page } from 'puppeteer';
 import { readPDFPages } from './utils/pdfReader';
 import { streamToBuffer } from './utils/streamToBuffer';
 import { createPenaltyDocument } from './utils/transformToPenaltyDoc';
@@ -12,7 +12,7 @@ import {
 
 import throng from 'throng';
 import Queue from 'bull';
-import { SeriesData } from 'types/myTypes';
+import { PenaltyModel, SeriesData } from 'types/myTypes';
 
 // Connect to a local redis instance locally, and the Heroku-provided URL in production.
 const REDIS_URL =
@@ -43,14 +43,19 @@ function start() {
 		'update-penalties-newest',
 		maxJobsPerWorker,
 		async (job) => {
+			const browser: Browser = await puppeteer.launch({
+				headless: true,
+				defaultViewport: null,
+			});
 			try {
 				const connectionSeriesYearDb = await connectMongoDb(
 					job.data.seriesYearDb
 				);
-				const docList = await connectionSeriesYearDb.models.Penalty_Doc.find()
-					.sort({ doc_date: -1 })
-					.limit(1)
-					.exec();
+				const docList: PenaltyModel[] =
+					await connectionSeriesYearDb.models.Penalty_Doc.find()
+						.sort({ doc_date: -1 })
+						.limit(1)
+						.exec();
 				// If no documents found in db, create a new update-penalties-all job.
 				if (docList.length === 0) {
 					const delegate = await workQueue.add('update-penalties-all', {
@@ -67,28 +72,35 @@ function start() {
 						year: delegate.data.year,
 					};
 				}
-				const responseSite = await axios.get(job.data.seriesYearPageURL, {
-					timeout: 15000,
+				const fiaPage: Page = await browser.newPage();
+				await fiaPage.goto(job.data.seriesYearPageURL, {
+					waitUntil: 'networkidle2',
+					timeout: 90000,
 				});
-				const { document } = new JSDOM(responseSite.data).window;
-				const listView: HTMLElement | null =
-					document.getElementById('list-view');
-				if (!listView) {
-					throw new Error('Error getting page with penalties.');
-				}
-				const mainDoc: HTMLDivElement | null = listView.querySelector(
-					'.decision-document-list'
+				await fiaPage.$$eval('a.event-title.use-ajax', (array) =>
+					array.forEach((anchor) => anchor.click())
 				);
-				if (!mainDoc) {
-					throw new Error('Error getting list of penalties.');
-				}
-				const allDocAnchors: HTMLAnchorElement[] = Array.from(
-					mainDoc.querySelectorAll('a')
+				await new Promise((resolve) => setTimeout(resolve, 10000));
+				const allDocsAnchors = await fiaPage.$$(
+					'a[download=""][target="_blank"]'
 				);
-				const allDocsHref: string[] = allDocAnchors
-					.map((link: HTMLAnchorElement) => {
-						const fileName = link.href
-							.slice(link.href.lastIndexOf('/') + 1)
+				const promises = allDocsAnchors.map(async (anchor) => {
+					const href = await (await anchor.getProperty('href')).jsonValue();
+					const published = await anchor.$eval(
+						'.date-display-single',
+						(p) => p.textContent
+					);
+					return {
+						href: href.includes(fiaDomain) ? href : fiaDomain + href,
+						published: published,
+					};
+				});
+				const allDocsData = await Promise.all(promises);
+				const allDocsHref: string[] = allDocsData
+					.map((data) => {
+						if (!data.href || !data.published) return;
+						const fileName = data.href
+							.slice(data.href.lastIndexOf('/') + 1)
 							.trim()
 							.toLowerCase();
 						const disallowedDoc = disallowedWordsInDocName.some((str) =>
@@ -102,26 +114,21 @@ function start() {
 								fileName.includes('infringment') ||
 								fileName.includes('infringement'))
 						) {
-							const published = link.querySelector(
-								'.date-display-single'
-							)?.textContent;
-							if (!published) return;
-							const dateAndTime = published.split(' ');
-							const dateStrings = dateAndTime[0].split('.');
+							const dateStrings = data.published.replace(' ', '.').split('.');
 							const reformattedDate =
-								'20' +
+								new Date().getFullYear().toString().slice(0, -2) +
 								dateStrings[2] +
-								'/' +
+								'-' +
 								dateStrings[1] +
-								'/' +
+								'-' +
 								dateStrings[0] +
-								' ' +
-								dateAndTime[1];
+								'T' +
+								dateStrings[3];
 							if (
 								new Date(reformattedDate).getTime() + 24 * 60 * 60 * 1000 >=
 								new Date(docList[0].doc_date).getTime()
 							) {
-								return link.href;
+								return data.href;
 							}
 						}
 					})
@@ -142,10 +149,10 @@ function start() {
 							new Promise((resolve, reject) =>
 								setTimeout(async () => {
 									try {
-										const responseFile = await axios.get(fiaDomain + href, {
-											responseType: 'stream',
-											timeout: 15000,
-										});
+										const responseFile = await axios.get(
+											href.includes(fiaDomain) ? href : fiaDomain + href,
+											{ responseType: 'stream', timeout: 15000 }
+										);
 										const fileBuffer = await streamToBuffer(responseFile.data);
 										const readPDF = await readPDFPages(fileBuffer);
 										const transformed = createPenaltyDocument(
@@ -177,13 +184,18 @@ function start() {
 										resolve(null);
 									} catch (error: any) {
 										console.log(error);
-										console.log('Errored file URL: ' + fiaDomain + href);
+										console.log(
+											'Errored file URL: ' + href.includes(fiaDomain)
+												? href
+												: fiaDomain + href
+										);
 										reject(error);
 									}
 								}, 2000 * i)
 							)
 					)
 				);
+				browser.close();
 				return {
 					status: 'Finished updating newest documents.',
 					series: job.data.series,
@@ -194,6 +206,7 @@ function start() {
 					failures: results.filter((obj) => obj.status === 'rejected').length,
 				};
 			} catch (error: any) {
+				browser.close();
 				console.log(error);
 				return { error };
 			}
@@ -202,28 +215,28 @@ function start() {
 
 	// Update all documents for the specified year.
 	workQueue.process('update-penalties-all', maxJobsPerWorker, async (job) => {
+		const browser: Browser = await puppeteer.launch({
+			headless: true,
+			defaultViewport: null,
+		});
 		try {
-			const responseSite = await axios.get(job.data.seriesYearPageURL, {
-				timeout: 15000,
+			const fiaPage: Page = await browser.newPage();
+			await fiaPage.goto(job.data.seriesYearPageURL, {
+				waitUntil: 'networkidle2',
+				timeout: 90000,
 			});
-			const { document } = new JSDOM(responseSite.data).window;
-			const listView: HTMLElement | null = document.getElementById('list-view');
-			if (!listView) {
-				throw new Error('Error getting page with penalties.');
-			}
-			const mainDoc: HTMLDivElement | null = listView.querySelector(
-				'.decision-document-list'
+			await fiaPage.$$eval('a.event-title.use-ajax', (array) =>
+				array.forEach((anchor) => anchor.click())
 			);
-			if (!mainDoc) {
-				throw new Error('Error getting list of penalties.');
-			}
-			const allDocAnchors: HTMLAnchorElement[] = Array.from(
-				mainDoc.querySelectorAll('a')
+			await new Promise((resolve) => setTimeout(resolve, 10000));
+			const allDocsAnchors: string[] = await fiaPage.$$eval(
+				'a[download=""][target="_blank"]',
+				(array) => array.map((a) => a.href)
 			);
-			const allDocsHref: string[] = allDocAnchors
-				.map((link: HTMLAnchorElement) => {
-					const fileName = link.href
-						.slice(link.href.lastIndexOf('/') + 1)
+			const allDocsHref: string[] = allDocsAnchors
+				.map((href) => {
+					const fileName = href
+						.slice(href.lastIndexOf('/') + 1)
 						.trim()
 						.toLowerCase();
 					const disallowedDoc = disallowedWordsInDocName.some((str) =>
@@ -237,7 +250,7 @@ function start() {
 							fileName.includes('infringment') ||
 							fileName.includes('infringement'))
 					) {
-						return link.href;
+						return href;
 					}
 				})
 				.filter((v) => v !== undefined) as string[];
@@ -260,10 +273,10 @@ function start() {
 						new Promise<void>((resolve, reject) =>
 							setTimeout(async () => {
 								try {
-									const responseFile = await axios.get(fiaDomain + href, {
-										responseType: 'stream',
-										timeout: 15000,
-									});
+									const responseFile = await axios.get(
+										href.includes(fiaDomain) ? href : fiaDomain + href,
+										{ responseType: 'stream', timeout: 15000 }
+									);
 									const fileBuffer = await streamToBuffer(responseFile.data);
 									const readPDF = await readPDFPages(fileBuffer);
 									const transformed = createPenaltyDocument(
@@ -295,13 +308,18 @@ function start() {
 									resolve();
 								} catch (error: any) {
 									console.log(error);
-									console.log('Errored file URL: ' + fiaDomain + href);
+									console.log(
+										'Errored file URL: ' + href.includes(fiaDomain)
+											? href
+											: fiaDomain + href
+									);
 									reject(error);
 								}
 							}, 2000 * i)
 						)
 				)
 			);
+			browser.close();
 			return {
 				status: 'Finished updating all documents.',
 				series: job.data.series,
@@ -312,6 +330,7 @@ function start() {
 				failures: results.filter((obj) => obj.status === 'rejected').length,
 			};
 		} catch (error: any) {
+			browser.close();
 			console.log(error);
 			return { error };
 		}
@@ -319,42 +338,53 @@ function start() {
 
 	// Acquire years supported by each series from FIA website.
 	workQueue.process('update-series-data', maxJobsPerWorker, async () => {
+		const browser: Browser = await puppeteer.launch({
+			headless: true,
+			defaultViewport: null,
+		});
 		try {
 			const getYears = async (
 				series: string,
 				url: string
 			): Promise<SeriesData[]> => {
-				const responseSite = await axios.get(url, {
-					timeout: 15000,
+				const fiaPage: Page = await browser.newPage();
+				await fiaPage.goto(url, {
+					waitUntil: 'networkidle2',
+					timeout: 90000,
 				});
-				const { document } = new JSDOM(responseSite.data).window;
-				const selectList: HTMLElement | null = document.getElementById(
-					'facetapi_select_facet_form_3'
+				const selectList = await fiaPage.$(
+					'select#facetapi_select_facet_form_3'
 				);
 				if (!selectList) {
-					throw new Error('Error getting years select list.');
+					throw new Error('Error getting years select element list.');
 				}
-				const allOptionsList: HTMLOptionElement[] = Array.from(
-					selectList.querySelectorAll('option')
+				const allOptionsValues: string[] = await selectList.$$eval(
+					'option',
+					(array) => array.map((option) => option.value)
 				);
-				const seriesDataObj: SeriesData[] = allOptionsList
-					.map((option: HTMLOptionElement) => {
-						if (!option.value || !option.value.includes('documents')) return;
-						const optionYear = option.value
-							.slice(option.value.lastIndexOf('/') + 1)
+				if (allOptionsValues === null) {
+					throw new Error('Error getting select element options values.');
+				}
+				const seriesDataObj: SeriesData[] = allOptionsValues
+					.map((value) => {
+						if (!value || !value.includes('documents')) return;
+						const optionYear = value
+							.slice(value.lastIndexOf('/') + 1)
 							.trim()
 							.split('-')[1];
 						const doc = {
 							series: series,
 							year: parseInt(optionYear),
-							documents_url: fiaDomain + option.value,
+							documents_url: value.includes(fiaDomain)
+								? value
+								: fiaDomain + value,
 						};
 						return doc;
 					})
 					.filter((v) => v !== undefined) as SeriesData[];
 				return seriesDataObj;
 			};
-			const allSeriesDataObj = [];
+			const allSeriesDataObj: SeriesData[] = [];
 			for (let [series, url] of Object.entries(seriesDocumentsPage)) {
 				allSeriesDataObj.push(...(await getYears(series, url)));
 			}
@@ -391,12 +421,18 @@ function start() {
 									resolve();
 								} catch (error: any) {
 									console.log(error);
+									console.log(
+										'Errored doc URL: ' + doc.documents_url.includes(fiaDomain)
+											? doc.documents_url
+											: fiaDomain + doc.documents_url
+									);
 									reject(error);
 								}
 							}, 500 * i)
 						)
 				)
 			);
+			browser.close();
 			return {
 				status: 'Finished acquiring years supported by each series.',
 				documents_found: allSeriesDataObj.length,
@@ -405,6 +441,7 @@ function start() {
 				failures: results.filter((obj) => obj.status === 'rejected').length,
 			};
 		} catch (error: any) {
+			browser.close();
 			console.log(error);
 			return { error };
 		}
