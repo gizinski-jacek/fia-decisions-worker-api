@@ -15,14 +15,15 @@ import {
 // and positioning of text fragments, white space on the page, closeness of certain letters, words and lines and you have to piece them back together.
 
 const getCleanFilename = (string: string): string => {
-	let filename = string;
+	const str = decodeURI(string);
+	let filename = str;
 	// Checking if string value comes from file name or from anchors href.
-	if (string.lastIndexOf('/') === -1) {
+	if (str.lastIndexOf('/') === -1) {
 		// Removing file extension.
-		filename = string.slice(0, -4);
+		filename = str.slice(0, -4);
 	} else {
 		// Extracting file name from href, removing extension.
-		filename = string.slice(string.lastIndexOf('/') + 1).slice(0, -4);
+		filename = str.slice(str.lastIndexOf('/') + 1).slice(0, -4);
 	}
 	// Matching against common duplicate file suffixes and removing them.
 	// Replacing underscores and trimming.
@@ -491,7 +492,9 @@ export const createPenaltyDocument = (
 			Reason: reasonContents,
 		},
 		stewards: stewards,
-		pdf_original_url: fiaDomain + originalHref,
+		pdf_original_url: originalHref.includes(fiaDomain)
+			? originalHref
+			: fiaDomain + originalHref,
 	};
 	return document;
 };
