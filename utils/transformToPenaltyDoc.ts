@@ -217,17 +217,17 @@ const cleanupIncidentDetails = (data: string[]): string[] => {
 };
 
 const getWeekendDate = (data: string[], headlineIndex: number): string => {
-	// Extracting first index, which is race weekend date, and removing it from array.
 	let weekend: string = '';
 
 	// Removing known, easy to find fields.
 	// Filtering out instances of extra "The Stewards" strings and
 	// strings shorter than 4 characters, those are each letter of Grand Prix name.
 	// Skipping first index which might contain the year, and slicing until start of headline.
-	const removedKnownFields = data;
-	removedKnownFields.splice(headlineIndex);
-	removedKnownFields.splice(data.indexOf('From'), 5);
-	removedKnownFields.splice(data.indexOf('Document'), 6);
+	let removedKnownFields = data.slice(0, headlineIndex);
+	removedKnownFields.splice(
+		removedKnownFields.indexOf('From'),
+		removedKnownFields.indexOf('Document') + 6
+	);
 	const removedMisc = removedKnownFields
 		.filter((str) => str !== 'The Stewards')
 		.filter((str) => str.length > 4)
@@ -240,6 +240,15 @@ const getWeekendDate = (data: string[], headlineIndex: number): string => {
 			removedMisc[1]) as string;
 	} else {
 		weekend = removedMisc[0] as string;
+	}
+	// Checking if the last 4 characters in weekend string are a number.
+	// If it is not, it means the string does not contain year, attempting
+	// to extract year from field following 'Date' field of the document.
+	if (isNaN(new Date(weekend.slice(-4)).getFullYear())) {
+		const yearFromDocDate = data[data.indexOf('Date') + 1].slice(-4).trim();
+		if (yearFromDocDate.length === 4 && !isNaN(Number(yearFromDocDate))) {
+			weekend = weekend + ' ' + yearFromDocDate;
+		}
 	}
 	return weekend;
 };
@@ -429,9 +438,9 @@ export const createPenaltyDocument = (
 	series: 'f1' | 'f2' | 'f3'
 ): TransformedPDFData => {
 	// Fixing grammar error in official documents.
-	const fixedPDfDataArray = pdfDataArray
-		.map((string) => string.replaceAll('infringment', 'infringement'))
-		.map((string) => string.replaceAll('Infringment', 'Infringement'));
+	const fixedPDfDataArray = pdfDataArray.map((string) =>
+		string.replaceAll('infringment', 'infringement')
+	);
 
 	// Check if file has correct format.
 	checkForRequiredFields(fixedPDfDataArray);
