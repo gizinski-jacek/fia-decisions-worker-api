@@ -11,7 +11,7 @@ const Series_Data_Doc = new Schema<
 		year: {
 			type: Number,
 			trim: true,
-			min: 2019,
+			min: 2015,
 			max: new Date().getFullYear(),
 			required: true,
 		},
